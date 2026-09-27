@@ -16,7 +16,7 @@ This project implements a chatbot that:
 6. Performs supported TaskFlow task actions through a host callback when integrated with the main app.
 7. Returns the reply, intent, confidence score, and action metadata as JSON over a REST API.
 
-It is built to be **explainable and extensible** rather than a black box — every stage of the pipeline lives in its own file.
+It is built to be **explainable and extensible** rather than a black box. Every stage of the pipeline lives in its own file.
 
 ---
 
@@ -232,7 +232,7 @@ Send a user message and receive a chatbot reply.
 { "message": "What are your working hours?" }
 ```
 
-**Success response — `200 OK`**
+**Success response: `200 OK`**
 ```json
 {
   "reply": "Our working hours are 9 AM to 6 PM, Monday to Saturday.",
@@ -260,7 +260,7 @@ Send a user message and receive a chatbot reply.
 
 Clears the conversation context for the session in `x-session-id`.
 
-**Response — `200 OK`**
+**Response: `200 OK`**
 ```json
 { "message": "Session cleared.", "sessionId": "b3e1..." }
 ```
@@ -269,7 +269,7 @@ Clears the conversation context for the session in `x-session-id`.
 
 Liveness check.
 
-**Response — `200 OK`**
+**Response: `200 OK`**
 ```json
 { "status": "ok", "uptimeSeconds": 42, "timestamp": "2026-01-01T12:00:00.000Z" }
 ```
@@ -334,18 +334,18 @@ From the repository root, the equivalent command is `npm run test:chatbot`.
 Natural Language Processing is the field of computer science concerned with enabling computers to understand, interpret, and generate human language. It sits at the intersection of linguistics, statistics, and machine learning.
 
 **Why NLP in a chatbot?**
-A chatbot can't rely on exact string matching — the same request ("what time do you open?" vs "when are you available?") can be phrased in many ways. NLP lets us map many surface forms onto a smaller number of underlying meanings (**intents**).
+A chatbot can't rely on exact string matching. The same request ("what time do you open?" vs "when are you available?") can be phrased in many ways. NLP lets us map many surface forms onto a smaller number of underlying meanings (**intents**).
 
 **How tokenization works**
 Tokenization splits a sentence into individual units (tokens), usually words. `"What time do you open?"` becomes `["What", "time", "do", "you", "open"]`. This project uses `natural`'s `WordTokenizer`, wrapped in `tokenizer.js`.
 
 **How preprocessing works**
 Before classification, text is normalized so that superficial differences (capitalization, punctuation, minor typos, filler words) don't confuse the model:
-- **Lowercasing** — `"Hello"` and `"hello"` should be treated the same.
-- **Punctuation removal** — `"open?"` → `"open"`.
-- **Stopword removal** — common words like "is", "the", "do" carry little intent-specific meaning and are filtered out (with a small exception list for words like "what"/"how" that matter for question type).
-- **Stemming** — reduces words to a root form (`"opening"` → `"open"`) so different word forms match the same pattern.
-- **Spell correction** — for short, informal chat text, minor typos are common. We measure the **Levenshtein distance** (minimum number of single-character edits) between an unknown word and every word in our known vocabulary, and substitute the closest match if it's within 1–2 edits.
+- **Lowercasing**: `"Hello"` and `"hello"` should be treated the same.
+- **Punctuation removal**: `"open?"` -> `"open"`.
+- **Stopword removal**: common words like "is", "the", "do" carry little intent-specific meaning and are filtered out (with a small exception list for words like "what"/"how" that matter for question type).
+- **Stemming**: reduces words to a root form (`"opening"` -> `"open"`) so different word forms match the same pattern.
+- **Spell correction**: for short, informal chat text, minor typos are common. We measure the **Levenshtein distance** (minimum number of single-character edits) between an unknown word and every word in our known vocabulary, and substitute the closest match if it's within 1–2 edits.
 
 **How intent classification works**
 This project uses a **Naive Bayes classifier**, a well-known statistical model. It estimates:
@@ -357,10 +357,10 @@ P(intent | words) ∝ P(words | intent) × P(intent)
 During training, it learns how often each word appears in the example sentences for each intent (`src/data/intents.json`). At classification time, it multiplies together the probabilities of each word given each intent, and picks the intent with the highest resulting probability. It's called "naive" because it assumes each word is independent of the others, which isn't strictly true in language, but works surprisingly well for short, focused sentences like chatbot queries.
 
 **How confidence scoring works**
-The classifier returns a relative likelihood for every intent; the top one is used as the **confidence score**. If it's below `CONFIDENCE_THRESHOLD` (default 0.10), the system treats the message as unrecognized and returns a fallback response rather than guessing — an important safety behavior for real-world chatbots.
+The classifier returns a relative likelihood for every intent; the top one is used as the **confidence score**. If it's below `CONFIDENCE_THRESHOLD` (default 0.10), the system treats the message as unrecognized and returns a fallback response rather than guessing. This is an important safety behavior for real-world chatbots.
 
 **How entity extraction works**
-Separately from intent classification, `entityExtractor.js` scans the raw message with regular expressions to pull out structured data: email addresses, phone numbers, order IDs, monetary amounts, date keywords, and known service names. This is complementary to intent classification — the *intent* is "what do they want," while *entities* are "what specific details did they give me."
+Separately from intent classification, `entityExtractor.js` scans the raw message with regular expressions to pull out structured data: email addresses, phone numbers, order IDs, monetary amounts, date keywords, and known service names. This is complementary to intent classification. The *intent* is "what do they want," while *entities* are "what specific details did they give me."
 
 **How Node.js communicates with the NLP module**
 The local NLP modules are plain Node.js modules (`require`/`module.exports`) and run in-process. Optional Gemini response polishing is asynchronous and has a timeout; task mutations remain deterministic local callbacks.
@@ -372,7 +372,7 @@ Express is a minimal web framework that lets you define routes (`router.post('/c
 The browser's JavaScript (`public/script.js`) uses the `fetch()` API to send a `POST` request with a JSON body to `/api/chat`, and reads back a JSON response, which it renders as a new chat bubble. This is the standard REST/JSON pattern used by most modern web apps.
 
 **How the complete request-response pipeline works**
-See the architecture diagram in Section 4 — from a keystroke in the browser, through Express middleware, the NLP pipeline, and back to a rendered chat bubble, typically in well under 50ms on a local machine.
+See the architecture diagram in Section 4. From a keystroke in the browser, through Express middleware, the NLP pipeline, and back to a rendered chat bubble, the flow typically takes well under 50ms on a local machine.
 
 ---
 
@@ -391,9 +391,9 @@ See the architecture diagram in Section 4 — from a keystroke in the browser, t
 
 ## 14. Limitations
 
-- The Naive Bayes classifier is a **bag-of-words** model — it doesn't understand word order, negation ("I do **not** want pricing") or nuanced sentiment.
+- The Naive Bayes classifier is a **bag-of-words** model. It doesn't understand word order, negation ("I do **not** want pricing") or nuanced sentiment.
 - Confidence scores from Naive Bayes are not perfectly calibrated probabilities; they're best used as *relative* signals, not exact percentages.
-- Conversation context is a simple "last intent" memory — it doesn't handle deep, multi-turn reasoning.
+- Conversation context is a simple "last intent" memory. It doesn't handle deep, multi-turn reasoning.
 - Session storage is in-memory only and resets when the server restarts (not persisted to a database).
 - Entity extraction is regex-based, not a trained NER model, so unusual formats may be missed.
 - The intent dataset is small (as designed for an academic demo); real deployments need hundreds of examples per intent.
@@ -424,16 +424,16 @@ Because `intentClassifier.js`, `entityExtractor.js`, and `responseGenerator.js` 
 ## 16. Viva Questions & Answers
 
 **Q1: Why did you choose Naive Bayes instead of a deep learning model?**
-A: For a small, well-defined set of intents with limited training examples, Naive Bayes trains instantly, requires no GPU, and is easy to explain and debug — ideal for a starter/academic project. Deep learning models need much more data to outperform it and add deployment complexity.
+A: For a small, well-defined set of intents with limited training examples, Naive Bayes trains instantly, requires no GPU, and is easy to explain and debug. It is ideal for a starter/academic project. Deep learning models need much more data to outperform it and add deployment complexity.
 
 **Q2: What does "confidence" mean in your system, and why threshold it?**
-A: It's the classifier's relative likelihood for the top-predicted intent. We threshold it (default 0.10) so the bot doesn't confidently answer a question it doesn't actually understand — instead it triggers a fallback response, which is safer and more honest than guessing.
+A: It's the classifier's relative likelihood for the top-predicted intent. We threshold it (default 0.10) so the bot doesn't confidently answer a question it doesn't actually understand. It triggers a fallback response, which is safer and more honest than guessing.
 
 **Q3: How does your chatbot handle two different phrasings of the same question?**
 A: Preprocessing (lowercasing, stemming, stopword removal) normalizes both phrasings toward a similar feature representation, and because the classifier was trained on multiple example phrasings per intent, it can generalize to phrasings it hasn't seen verbatim.
 
 **Q4: How is conversation context implemented?**
-A: Each session (identified by a client-generated ID sent via the `x-session-id` header) has an in-memory context object storing the last recognized intent and entities. The response generator can consult this context — e.g. a "pricing" question right after a "services" question gets a tailored, context-aware reply.
+A: Each session (identified by a client-generated ID sent via the `x-session-id` header) has an in-memory context object storing the last recognized intent and entities. The response generator can consult this context. For example, a "pricing" question right after a "services" question gets a tailored, context-aware reply.
 
 **Q5: What security measures does the API have?**
 A: Helmet for secure HTTP headers and a Content Security Policy, CORS restrictions, `express-rate-limit` to prevent abuse, strict input validation and sanitization (rejecting non-string/empty/oversized messages and stripping HTML tags), a request body size cap, and centralized error handling that never leaks stack traces to the client.
@@ -445,16 +445,16 @@ A: An empty (or missing, or non-string, or oversized) message is rejected with a
 A: `geminiClient.js` receives only a recognized intent, the sanitized user message, and the local reference answer. Gemini may polish the wording, but it cannot create or modify tasks, and the local response is used whenever Gemini is disabled, times out, or fails. The API key stays server-side in `.env`.
 
 **Q8: Why separate preprocessing, classification, extraction, and response generation into different files?**
-A: Single Responsibility Principle — each stage of the NLP pipeline is independently testable, replaceable, and understandable. It also matches how real-world NLP systems are architected as pipelines.
+A: Single Responsibility Principle: each stage of the NLP pipeline is independently testable, replaceable, and understandable. It also matches how real-world NLP systems are architected as pipelines.
 
 **Q9: What is the difference between intent classification and entity extraction?**
 A: Intent classification answers "what does the user want?" (a category, like `pricing` or `working_hours`). Entity extraction answers "what specific details did they mention?" (like an email address or an order ID). Both are used together to generate a precise response.
 
 **Q10: What are the current limitations of this system, and how would you address them in production?**
-A: See Section 14 (Limitations) and Section 15 (Future Enhancements) — key upgrades would be a larger/ML-based intent model, persistent database-backed session storage, and richer entity extraction via NER or an LLM.
+A: See Section 14 (Limitations) and Section 15 (Future Enhancements). Key upgrades would be a larger/ML-based intent model, persistent database-backed session storage, and richer entity extraction via NER or an LLM.
 
 ---
 
 ## License
 
-MIT — for academic/educational use.
+MIT license for academic/educational use.

@@ -1,4 +1,4 @@
-# TaskFlow — Smart Task Manager
+# TaskFlow - Smart Task Manager
 
 A clean, modern task manager built with **Node.js** and **Express.js**, created as a college practical to demonstrate full-stack web development alongside **Git version control** (branches, commits, merges).
 
@@ -122,12 +122,12 @@ After a task is added, completed, or deleted, the main page refreshes so the lis
 
 This project was built incrementally using feature branches merged into `main`:
 
-1. `main` — initial project setup (Node.js + Express skeleton)
-2. `feature/frontend` — initial HTML/EJS layout and styling → merged into `main`
-3. `feature/task-functionality` — add/complete/delete task routes → merged into `main`
-4. `feature/task-filter` — All/Active/Completed filtering → merged into `main`
-5. `feature/ui-polish` — responsive design, hover states, empty state → merged into `main`
-6. Final commit on `main` — documentation and cleanup
+1. `main` - initial project setup (Node.js + Express skeleton)
+2. `feature/frontend` - initial HTML/EJS layout and styling -> merged into `main`
+3. `feature/task-functionality` - add/complete/delete task routes -> merged into `main`
+4. `feature/task-filter` - All/Active/Completed filtering -> merged into `main`
+5. `feature/ui-polish` - responsive design, hover states, empty state -> merged into `main`
+6. Final commit on `main` - documentation and cleanup
 
 Key commands used throughout development: `git init`, `git status`, `git add`, `git commit`, `git branch`, `git switch`, `git merge`, `git log`, `git diff`. See the full command sequence in the project write-up provided alongside this README.
 

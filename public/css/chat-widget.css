@@ -1,5 +1,5 @@
 /* ==========================================================
-   Chat widget launcher — floating button + iframe panel
+  Chat widget launcher - floating button + iframe panel
    Added for the NLP chatbot integration. Scoped entirely to
    #chatWidgetRoot so it cannot affect any existing TaskFlow
    styles in style.css.
