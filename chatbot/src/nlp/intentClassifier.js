@@ -29,7 +29,7 @@ const { preprocess, buildVocabulary } = require('./preprocessor');
 // "fallback". We turn them into a real posterior probability ourselves via
 // Bayes' rule (P(class|words) = joint(class) / sum(joint(all classes))),
 // which is what the rest of the app actually expects a "confidence" to be.
-const CONFIDENCE_THRESHOLD = parseFloat(process.env.CONFIDENCE_THRESHOLD) || 0.12;
+const CONFIDENCE_THRESHOLD = parseFloat(process.env.CONFIDENCE_THRESHOLD) || 0.10;
 
 // Build a vocabulary from every training pattern up front. This is used
 // for lightweight spell-correction before classification.

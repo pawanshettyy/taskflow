@@ -77,6 +77,47 @@
       ]
     },
     {
+      "tag": "list_tasks",
+      "patterns": [
+        "show my tasks",
+        "list my tasks",
+        "what are my tasks",
+        "what do i need to do",
+        "show my to do list",
+        "display my task list"
+      ],
+      "responses": [
+        "Here are your current tasks."
+      ]
+    },
+    {
+      "tag": "complete_task",
+      "patterns": [
+        "complete a task",
+        "complete this task",
+        "finish a task",
+        "mark a task as done",
+        "mark task complete",
+        "check off a task"
+      ],
+      "responses": [
+        "Which task should I mark as complete?"
+      ]
+    },
+    {
+      "tag": "delete_task",
+      "patterns": [
+        "delete a task",
+        "remove a task",
+        "delete this task",
+        "remove this task",
+        "get rid of a task"
+      ],
+      "responses": [
+        "Which task should I remove?"
+      ]
+    },
+    {
       "tag": "help",
       "patterns": [
         "help",

@@ -10,7 +10,7 @@
 
   window.addEventListener("message", function (event) {
     if (event.origin !== window.location.origin || event.source !== iframe.contentWindow) return;
-    if (event.data && event.data.type === "task-added") {
+    if (event.data && event.data.type === "task-changed") {
       window.location.reload();
     }
   });

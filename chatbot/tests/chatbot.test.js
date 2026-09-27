@@ -141,6 +141,48 @@ describe('POST /api/chat', () => {
     chatbotService.configureTaskCreator(null);
   });
 
+  test('supports listing, completing, and deleting tasks through chat', async () => {
+    const tasks = [
+      { id: 1, title: 'Buy milk', completed: false },
+      { id: 2, title: 'Read notes', completed: false },
+    ];
+    chatbotService.configureTaskActions({
+      list: () => tasks.filter((task) => !task.completed),
+      complete: (reference) => {
+        const task = tasks.find((candidate) => candidate.title.toLowerCase().includes(reference.toLowerCase()));
+        if (task) task.completed = true;
+        return task || null;
+      },
+      delete: (reference) => {
+        const index = tasks.findIndex((candidate) => candidate.title.toLowerCase().includes(reference.toLowerCase()));
+        return index === -1 ? null : tasks.splice(index, 1)[0];
+      },
+    });
+
+    const list = await request(app).post('/api/chat').send({ message: 'show my tasks' });
+    expect(list.body.intent).toBe('list_tasks');
+    expect(list.body.reply).toContain('Buy milk');
+
+    const completePrompt = await request(app)
+      .post('/api/chat')
+      .set('x-session-id', 'test-session-complete-task')
+      .send({ message: 'complete a task' });
+    expect(completePrompt.body.reply).toContain('Which task');
+
+    const complete = await request(app)
+      .post('/api/chat')
+      .set('x-session-id', 'test-session-complete-task')
+      .send({ message: 'Buy milk' });
+    expect(complete.body.intent).toBe('complete_task');
+    expect(complete.body.changedTask.title).toBe('Buy milk');
+
+    const deleted = await request(app).post('/api/chat').send({ message: 'delete task Read notes' });
+    expect(deleted.body.intent).toBe('delete_task');
+    expect(deleted.body.changedTask.title).toBe('Read notes');
+    expect(tasks).toEqual([{ id: 1, title: 'Buy milk', completed: true }]);
+    chatbotService.configureTaskActions(null);
+  });
+
   test('rejects an empty message with 400', async () => {
     const res = await request(app).post('/api/chat').send({ message: '' });
     expect(res.statusCode).toBe(400);

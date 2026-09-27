@@ -13,11 +13,12 @@ const { classifyIntent } = require('../nlp/intentClassifier');
 const { extractEntities } = require('../nlp/entityExtractor');
 const { generateResponse } = require('../nlp/responseGenerator');
 const { generateReply: generateGeminiReply } = require('./geminiClient');
-const { extractTaskTitle } = require('./taskActions');
+const { extractTaskTitle, extractTaskReference } = require('./taskActions');
 const sessionStore = require('./sessionStore');
 
 const MAX_MESSAGE_LENGTH = 500;
 let taskCreator = null;
+let taskActions = {};
 
 /**
  * Process an incoming chat message end-to-end.
@@ -40,8 +41,15 @@ async function processMessage(sessionId, rawMessage) {
   const { intent, confidence, alternatives } = classifyIntent(message);
   const entities = extractEntities(message);
   const isPendingTaskTitle = context.lastIntent === 'add_task' && intent === 'fallback';
-  const effectiveIntent = isPendingTaskTitle ? 'add_task' : intent;
+  const isPendingTaskAction = ['complete_task', 'delete_task'].includes(context.lastIntent) && intent === 'fallback';
+  const effectiveIntent = isPendingTaskTitle
+    ? 'add_task'
+    : isPendingTaskAction
+      ? context.lastIntent
+      : intent;
   let createdTask = null;
+  let changedTask = null;
+  let listedTasks = null;
 
   let localReply = generateResponse({ intent, entities, context });
   if (effectiveIntent === 'add_task') {
@@ -53,6 +61,34 @@ async function processMessage(sessionId, rawMessage) {
       localReply = `Added task: "${createdTask.title}".`;
     } else {
       localReply = 'Task creation is available from the TaskFlow app. What task should I add?';
+    }
+  } else if (effectiveIntent === 'list_tasks') {
+    if (!taskActions.list) {
+      localReply = 'Task list actions are available from the TaskFlow app.';
+    } else {
+      listedTasks = taskActions.list();
+      localReply = listedTasks.length > 0
+        ? `Your tasks: ${listedTasks.map((task) => task.title).join(', ')}.`
+        : 'You have no tasks yet.';
+    }
+  } else if (effectiveIntent === 'complete_task' || effectiveIntent === 'delete_task') {
+    const reference = extractTaskReference(message, effectiveIntent) || (isPendingTaskAction ? message.trim() : '');
+    const action = taskActions[effectiveIntent];
+    if (!reference) {
+      localReply = effectiveIntent === 'complete_task'
+        ? 'Which task should I mark as complete?'
+        : 'Which task should I remove?';
+    } else if (!action) {
+      localReply = 'Task actions are available from the TaskFlow app.';
+    } else {
+      changedTask = action(reference);
+      if (!changedTask) {
+        localReply = `I couldn't find a task matching "${reference}".`;
+      } else {
+        localReply = effectiveIntent === 'complete_task'
+          ? `Completed task: "${changedTask.title}".`
+          : `Removed task: "${changedTask.title}".`;
+      }
     }
   }
 
@@ -71,6 +107,8 @@ async function processMessage(sessionId, rawMessage) {
     entities,
     alternatives,
     task: createdTask,
+    changedTask,
+    tasks: listedTasks,
     sessionId,
   };
 }
@@ -81,6 +119,16 @@ async function processMessage(sessionId, rawMessage) {
  */
 function configureTaskCreator(creator) {
   taskCreator = typeof creator === 'function' ? creator : null;
+}
+
+function configureTaskActions(actions) {
+  taskActions = actions && typeof actions === 'object'
+    ? {
+      ...actions,
+      complete_task: actions.complete_task || actions.complete,
+      delete_task: actions.delete_task || actions.delete,
+    }
+    : {};
 }
 
 /**
@@ -95,5 +143,6 @@ module.exports = {
   processMessage,
   resetSession,
   configureTaskCreator,
+  configureTaskActions,
   MAX_MESSAGE_LENGTH,
 };

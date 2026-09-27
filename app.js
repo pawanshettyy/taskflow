@@ -54,6 +54,30 @@ chatbotService.configureTaskCreator((title) => {
   return task;
 });
 
+function findTask(reference) {
+  const normalized = String(reference).trim().toLowerCase();
+  const idMatch = normalized.match(/^#?(\d+)$/);
+  return idMatch
+    ? tasks.find((task) => task.id === Number(idMatch[1]))
+    : tasks.find((task) => task.title.toLowerCase() === normalized)
+      || tasks.find((task) => task.title.toLowerCase().includes(normalized));
+}
+
+chatbotService.configureTaskActions({
+  list: () => tasks.filter((task) => !task.completed),
+  complete: (reference) => {
+    const task = findTask(reference);
+    if (task) task.completed = true;
+    return task || null;
+  },
+  delete: (reference) => {
+    const task = findTask(reference);
+    if (!task) return null;
+    tasks = tasks.filter((candidate) => candidate.id !== task.id);
+    return task;
+  },
+});
+
 // ------------------------------------------------------------
 // Middleware
 // ------------------------------------------------------------

@@ -14,4 +14,15 @@ function extractTaskTitle(message) {
   return reminderMatch ? reminderMatch[1].trim() : '';
 }
 
-module.exports = { extractTaskTitle };
+function extractTaskReference(message, action) {
+  const prefixes = {
+    complete_task: /^(?:please\s+)?(?:complete|finish|check off|mark)\s+(?:the\s+|a\s+)?(?:task\s*)?(?:as\s+done\s*)?/i,
+    delete_task: /^(?:please\s+)?(?:delete|remove|get rid of)\s+(?:the\s+)?(?:task\s*)?/i,
+  };
+  const prefix = prefixes[action];
+  if (!prefix) return '';
+
+  return String(message || '').replace(prefix, '').replace(/^[:#\s]+/, '').replace(/[.!?]+$/, '').trim();
+}
+
+module.exports = { extractTaskTitle, extractTaskReference };

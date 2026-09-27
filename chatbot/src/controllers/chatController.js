@@ -35,6 +35,8 @@ async function postChat(req, res, next) {
       confidence: result.confidence,
       entities: result.entities,
       task: result.task,
+      changedTask: result.changedTask,
+      tasks: result.tasks,
       sessionId: result.sessionId,
       timestamp: new Date().toISOString(),
     });
