@@ -13,7 +13,7 @@ const { classifyIntent } = require('../nlp/intentClassifier');
 const { extractEntities } = require('../nlp/entityExtractor');
 const { generateResponse } = require('../nlp/responseGenerator');
 const { generateReply: generateGeminiReply } = require('./geminiClient');
-const { extractTaskDetails, extractTaskReference } = require('./taskActions');
+const { extractTaskDetails, extractTaskReference, extractRescheduleDetails } = require('./taskActions');
 const sessionStore = require('./sessionStore');
 
 const MAX_MESSAGE_LENGTH = 500;
@@ -41,7 +41,7 @@ async function processMessage(sessionId, rawMessage) {
   const { intent, confidence, alternatives } = classifyIntent(message);
   const entities = extractEntities(message);
   const isPendingTaskTitle = context.lastIntent === 'add_task' && intent === 'fallback';
-  const isPendingTaskAction = ['complete_task', 'delete_task'].includes(context.lastIntent) && intent === 'fallback';
+  const isPendingTaskAction = ['complete_task', 'delete_task', 'reschedule_task'].includes(context.lastIntent) && intent === 'fallback';
   const effectiveIntent = isPendingTaskTitle
     ? 'add_task'
     : isPendingTaskAction
@@ -93,6 +93,19 @@ async function processMessage(sessionId, rawMessage) {
           : `Removed task: "${changedTask.title}".`;
       }
     }
+  } else if (effectiveIntent === 'reschedule_task') {
+    const details = extractRescheduleDetails(message);
+    const reference = details.reference || (isPendingTaskAction ? message.trim() : '');
+    if (!reference || !details.dueDate) {
+      localReply = 'Which task should I reschedule, and what date should it have?';
+    } else if (!taskActions.reschedule_task) {
+      localReply = 'Task actions are available from the TaskFlow app.';
+    } else {
+      changedTask = taskActions.reschedule_task(reference, details.dueDate, sessionId);
+      localReply = changedTask
+        ? `Rescheduled task: "${changedTask.title}" to ${changedTask.dueDate}.`
+        : `I couldn't find a task matching "${reference}".`;
+    }
   }
 
   const reply = effectiveIntent === 'fallback'
@@ -130,6 +143,7 @@ function configureTaskActions(actions) {
       ...actions,
       complete_task: actions.complete_task || actions.complete,
       delete_task: actions.delete_task || actions.delete,
+      reschedule_task: actions.reschedule_task || actions.reschedule,
     }
     : {};
 }

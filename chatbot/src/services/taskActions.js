@@ -75,4 +75,12 @@ function extractTaskReference(message, action) {
   return String(message || '').replace(prefix, '').replace(/^[:#\s]+/, '').replace(/[.!?]+$/, '').trim();
 }
 
-module.exports = { extractTaskTitle, extractTaskReference, extractDueDate, extractTaskDetails };
+function extractRescheduleDetails(message) {
+  const match = String(message || '').match(/^(?:please\s+)?(?:reschedule|change|move|update|postpone)\s+(?:the\s+)?task\s+(.+?)\s+(?:to|for|due(?:\s+on)?)\s+/i);
+  return {
+    reference: match ? match[1].trim() : '',
+    dueDate: extractDueDate(message),
+  };
+}
+
+module.exports = { extractTaskTitle, extractTaskReference, extractDueDate, extractTaskDetails, extractRescheduleDetails };

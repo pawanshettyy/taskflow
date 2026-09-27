@@ -118,6 +118,20 @@
       ]
     },
     {
+      "tag": "reschedule_task",
+      "patterns": [
+        "reschedule a task",
+        "change the due date of a task",
+        "move a task to another date",
+        "update a task due date",
+        "postpone a task",
+        "change when a task is due"
+      ],
+      "responses": [
+        "Which task should I reschedule, and what date should it have?"
+      ]
+    },
+    {
       "tag": "help",
       "patterns": [
         "help",

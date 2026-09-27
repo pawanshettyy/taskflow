@@ -52,4 +52,15 @@ function deleteTask(userId, reference) {
   return task;
 }
 
-module.exports = { listTasks, createTask, findTask, setCompleted, deleteTask };
+function updateTask(userId, reference, { title, dueDate } = {}) {
+  const task = findTask(userId, reference);
+  if (!task) return null;
+  db.prepare(`
+    UPDATE tasks
+    SET title = ?, due_date = ?
+    WHERE id = ? AND user_id = ?
+  `).run(title || task.title, dueDate === undefined ? task.dueDate : dueDate, task.id, userId);
+  return findTask(userId, String(task.id));
+}
+
+module.exports = { listTasks, createTask, findTask, setCompleted, deleteTask, updateTask };

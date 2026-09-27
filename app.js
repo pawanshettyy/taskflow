@@ -61,6 +61,10 @@ chatbotService.configureTaskActions({
     const userId = getChatUserId(chatSessionId);
     return userId ? taskStore.deleteTask(userId, reference) : null;
   },
+  reschedule: (reference, dueDate, chatSessionId) => {
+    const userId = getChatUserId(chatSessionId);
+    return userId ? taskStore.updateTask(userId, reference, { dueDate }) : null;
+  },
 });
 
 // ------------------------------------------------------------
@@ -240,6 +244,15 @@ app.post("/tasks/:id/complete", requireAuth, (req, res) => {
     taskStore.setCompleted(req.user.id, String(id), !task.completed);
   }
 
+  res.redirect(req.get("Referrer") || "/");
+});
+
+app.post("/tasks/:id/edit", requireAuth, (req, res) => {
+  const title = String(req.body.title || "").trim();
+  const dueDate = req.body.dueDate || null;
+  if (title.length > 0) {
+    taskStore.updateTask(req.user.id, String(req.params.id), { title, dueDate });
+  }
   res.redirect(req.get("Referrer") || "/");
 });
 

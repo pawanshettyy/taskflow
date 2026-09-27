@@ -61,5 +61,22 @@ describe('authentication and personal workspace', () => {
 
     const calendar = await request(app).get('/calendar?month=2099-12').set('Cookie', cookie);
     expect(calendar.text).toContain('review calendar plans');
+
+    const rescheduled = await request(app)
+      .post('/api/chat')
+      .set('Cookie', cookie)
+      .set('x-session-id', chatSessionId)
+      .send({ message: 'reschedule task review calendar plans to 2099-12-30' });
+    expect(rescheduled.body.intent).toBe('reschedule_task');
+    expect(rescheduled.body.changedTask.dueDate).toBe('2099-12-30');
+
+    const edited = await request(app)
+      .post(`/tasks/${rescheduled.body.changedTask.id}/edit`)
+      .set('Cookie', cookie)
+      .type('form')
+      .send({ title: 'Updated calendar plans', dueDate: '2099-12-31' });
+    expect(edited.statusCode).toBe(302);
+    const updatedCalendar = await request(app).get('/calendar?month=2099-12').set('Cookie', cookie);
+    expect(updatedCalendar.text).toContain('Updated calendar plans');
   });
 });

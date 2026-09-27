@@ -357,6 +357,48 @@ body {
   color: var(--danger);
 }
 
+.task-edit {
+  position: relative;
+}
+
+.task-edit summary {
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+
+.task-edit form {
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  display: flex;
+  gap: 6px;
+  padding: 8px;
+  position: absolute;
+  right: 0;
+  top: 24px;
+  z-index: 2;
+}
+
+.task-edit input {
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  font: inherit;
+  max-width: 150px;
+  padding: 5px;
+}
+
+.task-edit button {
+  background: var(--primary);
+  border: 0;
+  border-radius: 5px;
+  color: #fff;
+  cursor: pointer;
+  padding: 6px 9px;
+}
+
 /* ---------- Empty state ---------- */
 .empty-state {
   text-align: center;

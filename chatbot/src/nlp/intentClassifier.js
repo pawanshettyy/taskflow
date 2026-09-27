@@ -81,6 +81,11 @@ function classifyIntent(message) {
     return { intent: 'fallback', confidence: 0, cleanedText: '', alternatives: [] };
   }
 
+  const commandIntent = classifyTaskCommand(message);
+  if (commandIntent) {
+    return { intent: commandIntent, confidence: 1, cleanedText, alternatives: [] };
+  }
+
   const rawClassifications = classifier.getClassifications(cleanedText) || [];
 
   if (rawClassifications.length === 0) {
@@ -103,6 +108,15 @@ function classifyIntent(message) {
       value: Number(c.value.toFixed(4)),
     })),
   };
+}
+
+function classifyTaskCommand(message) {
+  const text = String(message || '').trim();
+  if (/^(?:please\s+)?(?:add|create|make)\s+(?:a\s+)?task\b/i.test(text)) return 'add_task';
+  if (/^(?:please\s+)?(?:reschedule|postpone|move|update|change)\s+(?:the\s+)?task\b/i.test(text)) return 'reschedule_task';
+  if (/^(?:please\s+)?(?:complete|finish|check off|mark)\s+(?:the\s+|a\s+)?task\b/i.test(text)) return 'complete_task';
+  if (/^(?:please\s+)?(?:delete|remove|get rid of)\s+(?:the\s+)?task\b/i.test(text)) return 'delete_task';
+  return null;
 }
 
 /**

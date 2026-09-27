@@ -1,4 +1,4 @@
-const { extractTaskTitle, extractDueDate, extractTaskDetails } = require('../src/services/taskActions');
+const { extractTaskTitle, extractDueDate, extractTaskDetails, extractRescheduleDetails } = require('../src/services/taskActions');
 
 describe('Task action parsing', () => {
   test('extracts a title from an add-task request', () => {
@@ -20,5 +20,12 @@ describe('Task action parsing', () => {
 
   test('understands tomorrow for calendar scheduling', () => {
     expect(extractDueDate('add a task to call the dentist tomorrow', new Date(2099, 11, 24))).toBe('2099-12-25');
+  });
+
+  test('extracts a task reference and date from a reschedule command', () => {
+    expect(extractRescheduleDetails('reschedule task submit report to 2099-12-30')).toEqual({
+      reference: 'submit report',
+      dueDate: '2099-12-30',
+    });
   });
 });

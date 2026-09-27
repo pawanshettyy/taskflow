@@ -26,15 +26,15 @@ TaskFlow lets you add tasks, mark them complete, delete them, and filter your li
 
 ## Technologies Used
 
-| Layer      | Technology            |
-|------------|------------------------|
-| Runtime    | Node.js                |
-| Framework  | Express.js              |
-| Templating | EJS                     |
-| Frontend   | HTML5, CSS3, JavaScript |
-| Storage    | SQLite database |
+| Layer      | Technology                        |
+| ---------- | --------------------------------- |
+| Runtime    | Node.js                           |
+| Framework  | Express.js                        |
+| Templating | EJS                               |
+| Frontend   | HTML5, CSS3, JavaScript           |
+| Storage    | SQLite database                   |
 | Database   | SQLite (`data/taskflow.sqlite`) |
-| Versioning | Git & GitHub            |
+| Versioning | Git & GitHub                      |
 
 ## Project Structure
 
@@ -93,25 +93,26 @@ add a task to review the report due 2026-10-05
 show my tasks
 complete a task       -> then provide the task name
 delete task Read notes
+reschedule task review calendar plans to 2026-10-12
 ```
 
 After a task is added, completed, or deleted, the main page refreshes so the list and counters stay synchronized.
 
 ## Routes
 
-| Method | Route                    | Purpose                        |
-|--------|---------------------------|---------------------------------|
-| GET    | `/`                        | Show all tasks (supports `?filter=all\|active\|completed`) |
-| POST   | `/tasks`                   | Add a personal task, optionally with `dueDate=YYYY-MM-DD` |
-| POST   | `/tasks/:id/complete`      | Toggle a task's completed state |
-| POST   | `/tasks/:id/delete`        | Delete a task                  |
-| GET    | `/calendar`                | Show the signed-in user's monthly calendar |
-| GET    | `/profile`                 | Show the signed-in user's profile and statistics |
-| GET    | `/auth/login`              | Sign-in page                  |
-| POST   | `/auth/login`              | Create an authenticated session |
-| GET    | `/auth/register`           | Registration page             |
-| POST   | `/auth/register`           | Create a user account         |
-| POST   | `/auth/logout`             | End the current session       |
+| Method | Route                   | Purpose                                                    |
+| ------ | ----------------------- | ---------------------------------------------------------- |
+| GET    | `/`                   | Show all tasks (supports`?filter=all\|active\|completed`)  |
+| POST   | `/tasks`              | Add a personal task, optionally with`dueDate=YYYY-MM-DD` |
+| POST   | `/tasks/:id/complete` | Toggle a task's completed state                            |
+| POST   | `/tasks/:id/delete`   | Delete a task                                              |
+| GET    | `/calendar`           | Show the signed-in user's monthly calendar                 |
+| GET    | `/profile`            | Show the signed-in user's profile and statistics           |
+| GET    | `/auth/login`         | Sign-in page                                               |
+| POST   | `/auth/login`         | Create an authenticated session                            |
+| GET    | `/auth/register`      | Registration page                                          |
+| POST   | `/auth/register`      | Create a user account                                      |
+| POST   | `/auth/logout`        | End the current session                                    |
 
 ## Git Workflow Used
 
