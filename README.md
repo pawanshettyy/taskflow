@@ -79,6 +79,10 @@ Then open your browser at **http://localhost:3000**
 
 Create an account from the sign-in page. Each account gets its own task list, calendar, and profile. SQLite stores accounts, sessions, chatbot ownership, and tasks in `data/taskflow.sqlite`.
 
+### Vercel deployment
+
+The repository includes `api/index.js` and `vercel.json` so Vercel can load the Express app as a Node function. Vercel uses `/tmp/taskflow.sqlite` to avoid writing into the read-only deployment bundle, but `/tmp` is ephemeral. Use a hosted database for persistent production data; local SQLite is appropriate for development and single-machine use.
+
 ### Optional Gemini support
 
 Copy `.env.example` to `.env` and set `GEMINI_API_KEY` to enable Gemini response polishing. Gemini receives only recognized intents, the sanitized message, and the local reference answer. It cannot create or modify tasks, unknown intents never call it, and network/API failures fall back to local responses. Keep the key server-side and never commit it.

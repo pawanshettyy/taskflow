@@ -1,0 +1,9 @@
+{
+  "version": 2,
+  "buildCommand": "npm rebuild better-sqlite3",
+  "functions": {
+    "api/index.js": {
+      "runtime": "nodejs22.x"
+    }
+  }
+}

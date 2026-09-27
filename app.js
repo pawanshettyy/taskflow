@@ -31,8 +31,9 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // ------------------------------------------------------------
-// In-memory "database"
-// Users, sessions, and tasks are persisted in data/taskflow.sqlite.
+// Database integration
+// Users, sessions, and tasks are persisted in SQLite. Vercel uses /tmp for
+// function startup compatibility; that filesystem is temporary by design.
 // ------------------------------------------------------------
 function getChatUserId(sessionId) {
   return authStore.getUserIdForChatSession(sessionId);

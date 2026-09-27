@@ -2,10 +2,12 @@ const fs = require('fs');
 const path = require('path');
 const Database = require('better-sqlite3');
 
-const dataDirectory = path.join(__dirname, '../../data');
+const isVercel = process.env.VERCEL === '1';
+const databasePath = process.env.DATABASE_PATH || (isVercel ? '/tmp/taskflow.sqlite' : path.join(__dirname, '../../data/taskflow.sqlite'));
+const dataDirectory = path.dirname(databasePath);
 fs.mkdirSync(dataDirectory, { recursive: true });
 
-const db = new Database(path.join(dataDirectory, 'taskflow.sqlite'));
+const db = new Database(databasePath);
 db.pragma('foreign_keys = ON');
 db.pragma('journal_mode = WAL');
 
