@@ -21,6 +21,7 @@ const cors = require("cors");
 const morgan = require("morgan");
 const rateLimit = require("express-rate-limit");
 const chatRoutes = require("./chatbot/src/routes/chatRoutes");
+const chatbotService = require("./chatbot/src/services/chatbotService");
 const { notFoundHandler: chatbotNotFoundHandler, errorHandler: chatbotErrorHandler } = require("./chatbot/src/middleware/errorHandler");
 
 const app = express();
@@ -41,6 +42,17 @@ let tasks = [
 
 // Keeps track of the next id to assign to a new task
 let nextId = 4;
+
+chatbotService.configureTaskCreator((title) => {
+  const task = {
+    id: nextId++,
+    title,
+    completed: false,
+    createdAt: new Date(),
+  };
+  tasks.push(task);
+  return task;
+});
 
 // ------------------------------------------------------------
 // Middleware

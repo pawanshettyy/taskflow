@@ -17,6 +17,7 @@ TaskFlow lets you add tasks, mark them complete, delete them, and filter your li
 - Live task counters (total / active / completed)
 - Friendly empty-state message when a list is empty
 - Fully responsive layout (desktop, tablet, mobile)
+- Optional Gemini-powered response polishing for recognized chatbot intents, with local fallback and app-scope restrictions
 - Clean, modern UI with a teal/amber color palette, custom typography, hover states and smooth transitions
 
 ## Technologies Used
@@ -65,6 +66,10 @@ npm start
 ```
 
 Then open your browser at **http://localhost:3000**
+
+### Optional Gemini support
+
+Copy `.env.example` to `.env` and set `GEMINI_API_KEY` to enable Gemini responses. The chatbot sends Gemini only a recognized intent, the sanitized user message, and the local reference answer. Unknown intents never call Gemini, and network/API failures fall back to the built-in response generator.
 
 ## Routes
 

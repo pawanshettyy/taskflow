@@ -8,6 +8,13 @@
   var iframe = root.querySelector("iframe");
   var loaded = false;
 
+  window.addEventListener("message", function (event) {
+    if (event.origin !== window.location.origin || event.source !== iframe.contentWindow) return;
+    if (event.data && event.data.type === "task-added") {
+      window.location.reload();
+    }
+  });
+
   launcher.addEventListener("click", function () {
     var isOpen = root.classList.toggle("cw-open");
 

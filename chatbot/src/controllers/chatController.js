@@ -26,7 +26,7 @@ async function postChat(req, res, next) {
     const sessionId = resolveSessionId(req);
     const { message } = req.body;
 
-    const result = chatbotService.processMessage(sessionId, message);
+    const result = await chatbotService.processMessage(sessionId, message);
 
     res.set('x-session-id', sessionId);
     return res.status(200).json({
@@ -34,6 +34,7 @@ async function postChat(req, res, next) {
       intent: result.intent,
       confidence: result.confidence,
       entities: result.entities,
+      task: result.task,
       sessionId: result.sessionId,
       timestamp: new Date().toISOString(),
     });

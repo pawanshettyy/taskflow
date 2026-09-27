@@ -109,6 +109,9 @@
       }
 
       appendMessage({ role: 'bot', text: data.reply, intent: data.intent, confidence: data.confidence });
+      if (data.task) {
+        window.parent.postMessage({ type: 'task-added', task: data.task }, window.location.origin);
+      }
     } catch (err) {
       showError(err.message || 'Unable to reach the server. Please check your connection and try again.');
       appendMessage({

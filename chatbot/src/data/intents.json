@@ -60,6 +60,23 @@
       ]
     },
     {
+      "tag": "add_task",
+      "patterns": [
+        "add a task",
+        "add a task for me",
+        "create a task",
+        "create a new task",
+        "make a task",
+        "add task to my list",
+        "add this to my tasks",
+        "remind me to do something",
+        "i need to remember to do something"
+      ],
+      "responses": [
+        "What task should I add?"
+      ]
+    },
+    {
       "tag": "help",
       "patterns": [
         "help",

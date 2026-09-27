@@ -13,6 +13,7 @@ const app = require('../server');
 const { classifyIntent } = require('../src/nlp/intentClassifier');
 const { preprocess } = require('../src/nlp/preprocessor');
 const { extractEntities } = require('../src/nlp/entityExtractor');
+const chatbotService = require('../src/services/chatbotService');
 
 describe('NLP preprocessing', () => {
   test('lowercases and strips punctuation', () => {
@@ -73,6 +74,11 @@ describe('Intent classification', () => {
     expect(result.intent).toBe('services');
   });
 
+  test('detects add-task intent instead of goodbye', () => {
+    const result = classifyIntent('add a task for me');
+    expect(result.intent).toBe('add_task');
+  });
+
   test('falls back on unrecognizable input', () => {
     const result = classifyIntent('asdkjhasd qweoiqwe zxcvzxcv');
     expect(result.intent).toBe('fallback');
@@ -105,6 +111,34 @@ describe('POST /api/chat', () => {
     expect(res.body).toHaveProperty('intent');
     expect(res.body).toHaveProperty('confidence');
     expect(res.body.intent).toBe('greeting');
+  });
+
+  test('adds a task when the title is provided in the follow-up message', async () => {
+    const createdTasks = [];
+    chatbotService.configureTaskCreator((title) => {
+      const task = { title };
+      createdTasks.push(task);
+      return task;
+    });
+
+    const sessionId = 'test-session-add-task-follow-up';
+    const prompt = await request(app)
+      .post('/api/chat')
+      .set('x-session-id', sessionId)
+      .send({ message: 'add a task for me' });
+    expect(prompt.body.intent).toBe('add_task');
+    expect(prompt.body.reply).toContain('What task');
+
+    const result = await request(app)
+      .post('/api/chat')
+      .set('x-session-id', sessionId)
+      .send({ message: 'buy groceries' });
+
+    expect(result.body.intent).toBe('add_task');
+    expect(result.body.reply).toContain('buy groceries');
+    expect(result.body.task).toEqual({ title: 'buy groceries' });
+    expect(createdTasks).toEqual([{ title: 'buy groceries' }]);
+    chatbotService.configureTaskCreator(null);
   });
 
   test('rejects an empty message with 400', async () => {
