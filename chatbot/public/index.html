@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Support Assistant</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <div class="app-header__identity">
+        <span class="app-header__mark" aria-hidden="true"></span>
+        <div>
+          <h1 class="app-header__title">Support Assistant</h1>
+          <p class="app-header__status" id="statusLine">Online</p>
+        </div>
+      </div>
+      <button class="clear-btn" id="clearBtn" type="button" title="Clear conversation">
+        Clear chat
+      </button>
+    </header>
+
+    <main class="chat-window" id="chatWindow" aria-live="polite">
+      <!-- Messages are injected here by script.js -->
+    </main>
+
+    <div class="typing-indicator" id="typingIndicator" hidden>
+      <span></span><span></span><span></span>
+    </div>
+
+    <div class="error-banner" id="errorBanner" hidden></div>
+
+    <form class="composer" id="composerForm" autocomplete="off">
+      <textarea
+        id="messageInput"
+        class="composer__input"
+        placeholder="Ask about services, pricing, hours..."
+        rows="1"
+        maxlength="500"
+        aria-label="Message"
+      ></textarea>
+      <button type="submit" class="composer__send" id="sendBtn" aria-label="Send message">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 12L20 4L13 21L11 13L3 12Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+        </svg>
+      </button>
+    </form>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

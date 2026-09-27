@@ -1,0 +1,222 @@
+{
+  "intents": [
+    {
+      "tag": "greeting",
+      "patterns": [
+        "hi",
+        "hello",
+        "hey",
+        "good morning",
+        "good afternoon",
+        "good evening",
+        "hey there",
+        "is anyone there",
+        "howdy",
+        "what's up",
+        "yo",
+        "hiya"
+      ],
+      "responses": [
+        "Hello! How can I help you today?",
+        "Hi there! What can I do for you?",
+        "Hey! I'm here to help. What do you need?"
+      ]
+    },
+    {
+      "tag": "goodbye",
+      "patterns": [
+        "bye",
+        "goodbye",
+        "see you later",
+        "see ya",
+        "catch you later",
+        "talk to you later",
+        "i am leaving",
+        "gotta go",
+        "farewell"
+      ],
+      "responses": [
+        "Goodbye! Have a great day!",
+        "See you later! Feel free to come back anytime.",
+        "Take care! Reach out if you need anything else."
+      ]
+    },
+    {
+      "tag": "thanks",
+      "patterns": [
+        "thanks",
+        "thank you",
+        "thanks a lot",
+        "appreciate it",
+        "thank you so much",
+        "thanks for the help",
+        "much appreciated",
+        "cheers"
+      ],
+      "responses": [
+        "You're welcome!",
+        "Happy to help!",
+        "Anytime! Let me know if you need anything else."
+      ]
+    },
+    {
+      "tag": "help",
+      "patterns": [
+        "help",
+        "can you help me",
+        "i need help",
+        "what can you do",
+        "how does this work",
+        "what can you help me with",
+        "i need assistance",
+        "support"
+      ],
+      "responses": [
+        "I can help with working hours, services, pricing, contact details, location, order status, and general questions. What would you like to know?",
+        "Sure! Ask me about our services, pricing, working hours, or how to reach us."
+      ]
+    },
+    {
+      "tag": "working_hours",
+      "patterns": [
+        "what are your working hours",
+        "when are you open",
+        "what time do you open",
+        "what time do you guys open",
+        "when do you close",
+        "are you open now",
+        "when are you available",
+        "what are your business hours",
+        "what time do you close",
+        "your opening hours",
+        "office hours"
+      ],
+      "responses": [
+        "Our working hours are 9 AM to 6 PM, Monday to Saturday.",
+        "We are open from 9 AM to 6 PM on weekdays and Saturday."
+      ]
+    },
+    {
+      "tag": "services",
+      "patterns": [
+        "what services do you offer",
+        "what are your services",
+        "what do you do",
+        "tell me about your services",
+        "what products do you have",
+        "services you provide",
+        "what kind of work do you do",
+        "what solutions do you offer"
+      ],
+      "responses": [
+        "We provide web development, mobile app development, and software consulting services.",
+        "Our main services include web development and software consulting."
+      ]
+    },
+    {
+      "tag": "pricing",
+      "patterns": [
+        "how much does it cost",
+        "what is the price",
+        "what are your prices",
+        "pricing details",
+        "how much do you charge",
+        "cost of your services",
+        "what is the cost",
+        "give me a quote",
+        "how expensive is it"
+      ],
+      "responses": [
+        "Our pricing depends on project scope. Basic packages start at $499. Would you like a detailed quote?",
+        "Pricing varies by project size, generally starting from $499. Can you share more details about your project?"
+      ]
+    },
+    {
+      "tag": "contact",
+      "patterns": [
+        "how can i contact you",
+        "what is your phone number",
+        "how do i reach you",
+        "give me your contact details",
+        "what is your email",
+        "contact information",
+        "how can i get in touch",
+        "can i call you"
+      ],
+      "responses": [
+        "You can reach us at support@example.com or call +1-800-555-0199.",
+        "Feel free to email support@example.com or call us at +1-800-555-0199."
+      ]
+    },
+    {
+      "tag": "location",
+      "patterns": [
+        "where are you located",
+        "what is your address",
+        "where is your office",
+        "where can i find you",
+        "your location",
+        "where are you based"
+      ],
+      "responses": [
+        "We are located at 123 Business Street, Suite 400, Springfield.",
+        "Our office is at 123 Business Street, Suite 400, Springfield."
+      ]
+    },
+    {
+      "tag": "order_status",
+      "patterns": [
+        "where is my order",
+        "what is my order status",
+        "track my order",
+        "has my order shipped",
+        "order status",
+        "check my order",
+        "when will my order arrive",
+        "track order number"
+      ],
+      "responses": [
+        "Please share your order ID so I can check its status.",
+        "I can look that up. Could you provide your order ID?"
+      ]
+    },
+    {
+      "tag": "complaint",
+      "patterns": [
+        "i have a complaint",
+        "i am not happy with the service",
+        "this is not working",
+        "i want to file a complaint",
+        "i am unsatisfied",
+        "your service is bad",
+        "i have an issue",
+        "i am facing a problem"
+      ],
+      "responses": [
+        "I'm sorry to hear that. Could you please describe the issue in more detail so we can help resolve it?",
+        "I apologize for the inconvenience. Please share more details and our team will assist you."
+      ]
+    },
+    {
+      "tag": "general_question",
+      "patterns": [
+        "who are you",
+        "are you a bot",
+        "are you human",
+        "what is your name",
+        "tell me about yourself",
+        "who made you",
+        "what company is this"
+      ],
+      "responses": [
+        "I'm an automated assistant built to answer your questions about our services.",
+        "I'm a chatbot here to help you with information about our business."
+      ]
+    }
+  ],
+  "fallbackResponses": [
+    "I'm sorry, I didn't quite understand that. Could you rephrase it?",
+    "I'm not sure I follow. Could you try asking in a different way?",
+    "I don't have an answer for that yet. Try asking about our services, pricing, or working hours."
+  ]
+}

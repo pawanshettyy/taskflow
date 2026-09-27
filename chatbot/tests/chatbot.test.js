@@ -1,0 +1,172 @@
+/**
+ * chatbot.test.js
+ * ---------------
+ * Covers:
+ *  - Intent classification for core intents (greeting, working_hours, services)
+ *  - Fallback behavior for unknown/gibberish queries
+ *  - NLP preprocessing (lowercasing, punctuation removal, stopword removal)
+ *  - The /api/chat and /api/health endpoints, including validation errors
+ */
+
+const request = require('supertest');
+const app = require('../server');
+const { classifyIntent } = require('../src/nlp/intentClassifier');
+const { preprocess } = require('../src/nlp/preprocessor');
+const { extractEntities } = require('../src/nlp/entityExtractor');
+
+describe('NLP preprocessing', () => {
+  test('lowercases and strips punctuation', () => {
+    const result = preprocess('Hello, World!!!');
+    expect(result.cleanedText).not.toMatch(/[A-Z]/);
+    expect(result.cleanedText).not.toMatch(/[,!]/);
+  });
+
+  test('removes stopwords but keeps meaningful tokens', () => {
+    const result = preprocess('what is the price of your service');
+    expect(result.tokens).toContain('what');
+    expect(result.tokens).not.toContain('is');
+    expect(result.tokens).not.toContain('the');
+  });
+
+  test('handles empty input without throwing', () => {
+    expect(() => preprocess('')).not.toThrow();
+    const result = preprocess('');
+    expect(result.cleanedText).toBe('');
+  });
+});
+
+describe('Entity extraction', () => {
+  test('extracts an email address', () => {
+    const entities = extractEntities('you can reach me at jane.doe@example.com');
+    expect(entities.emails).toContain('jane.doe@example.com');
+  });
+
+  test('extracts an order id', () => {
+    const entities = extractEntities('please check order #A1234 for me');
+    expect(entities.orderIds.length).toBeGreaterThan(0);
+  });
+
+  test('extracts a monetary amount', () => {
+    const entities = extractEntities('the plan costs $499.99');
+    expect(entities.amounts).toContain('$499.99');
+  });
+});
+
+describe('Intent classification', () => {
+  test('detects greeting intent', () => {
+    const result = classifyIntent('hello there');
+    expect(result.intent).toBe('greeting');
+  });
+
+  test('detects working_hours intent from a phrasing variant', () => {
+    const result = classifyIntent('hey, what time do you guys open?');
+    expect(result.intent).toBe('working_hours');
+  });
+
+  test('detects working_hours intent from a differently worded query', () => {
+    const result = classifyIntent('when are you available');
+    expect(result.intent).toBe('working_hours');
+  });
+
+  test('detects services intent', () => {
+    const result = classifyIntent('what services do you offer');
+    expect(result.intent).toBe('services');
+  });
+
+  test('falls back on unrecognizable input', () => {
+    const result = classifyIntent('asdkjhasd qweoiqwe zxcvzxcv');
+    expect(result.intent).toBe('fallback');
+  });
+
+  test('returns a confidence score between 0 and 1', () => {
+    const result = classifyIntent('hi');
+    expect(result.confidence).toBeGreaterThanOrEqual(0);
+    expect(result.confidence).toBeLessThanOrEqual(1);
+  });
+});
+
+describe('GET /api/health', () => {
+  test('returns 200 and status ok', async () => {
+    const res = await request(app).get('/api/health');
+    expect(res.statusCode).toBe(200);
+    expect(res.body.status).toBe('ok');
+  });
+});
+
+describe('POST /api/chat', () => {
+  test('returns a reply, intent, and confidence for a valid message', async () => {
+    const res = await request(app)
+      .post('/api/chat')
+      .send({ message: 'hello' })
+      .set('Content-Type', 'application/json');
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toHaveProperty('reply');
+    expect(res.body).toHaveProperty('intent');
+    expect(res.body).toHaveProperty('confidence');
+    expect(res.body.intent).toBe('greeting');
+  });
+
+  test('rejects an empty message with 400', async () => {
+    const res = await request(app).post('/api/chat').send({ message: '' });
+    expect(res.statusCode).toBe(400);
+  });
+
+  test('rejects a missing message field with 400', async () => {
+    const res = await request(app).post('/api/chat').send({});
+    expect(res.statusCode).toBe(400);
+  });
+
+  test('rejects an excessively long message with 400', async () => {
+    const longMessage = 'a'.repeat(600);
+    const res = await request(app).post('/api/chat').send({ message: longMessage });
+    expect(res.statusCode).toBe(400);
+  });
+
+  test('rejects a non-string message with 400', async () => {
+    const res = await request(app).post('/api/chat').send({ message: 12345 });
+    expect(res.statusCode).toBe(400);
+  });
+
+  test('maintains context across two related messages in one session', async () => {
+    const sessionId = 'test-session-context-1';
+
+    const first = await request(app)
+      .post('/api/chat')
+      .set('x-session-id', sessionId)
+      .send({ message: 'what are your services' });
+    expect(first.body.intent).toBe('services');
+
+    const second = await request(app)
+      .post('/api/chat')
+      .set('x-session-id', sessionId)
+      .send({ message: 'how much does it cost' });
+    expect(second.body.intent).toBe('pricing');
+    expect(second.body.reply.toLowerCase()).toContain('service');
+  });
+
+  test('strips basic HTML from the message (sanitization)', async () => {
+    const res = await request(app)
+      .post('/api/chat')
+      .send({ message: '<script>alert(1)</script> hello' });
+    expect(res.statusCode).toBe(200);
+    expect(res.body.reply).not.toContain('<script>');
+  });
+});
+
+describe('DELETE /api/chat/session', () => {
+  test('clears session context successfully', async () => {
+    const res = await request(app)
+      .delete('/api/chat/session')
+      .set('x-session-id', 'test-session-clear-1');
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toHaveProperty('message');
+  });
+});
+
+describe('404 handling', () => {
+  test('returns 404 for an unknown route', async () => {
+    const res = await request(app).get('/api/does-not-exist');
+    expect(res.statusCode).toBe(404);
+  });
+});

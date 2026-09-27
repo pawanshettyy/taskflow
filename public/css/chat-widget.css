@@ -1,0 +1,74 @@
+/* ==========================================================
+   Chat widget launcher — floating button + iframe panel
+   Added for the NLP chatbot integration. Scoped entirely to
+   #chatWidgetRoot so it cannot affect any existing TaskFlow
+   styles in style.css.
+   ========================================================== */
+
+#chatWidgetRoot {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 9999;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+#chatWidgetRoot .cw-launcher {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  background: var(--primary, #2f6f5e);
+  color: #fff;
+  box-shadow: var(--shadow, 0 8px 24px rgba(30, 42, 37, 0.18));
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+#chatWidgetRoot .cw-launcher:hover {
+  background: var(--primary-dark, #204c40);
+  transform: scale(1.05);
+}
+
+#chatWidgetRoot .cw-launcher svg {
+  width: 26px;
+  height: 26px;
+}
+
+#chatWidgetRoot .cw-panel {
+  position: absolute;
+  right: 0;
+  bottom: 72px;
+  width: 360px;
+  max-width: calc(100vw - 40px);
+  height: 520px;
+  max-height: calc(100vh - 120px);
+  background: var(--surface, #fff);
+  border-radius: var(--radius, 14px);
+  box-shadow: var(--shadow, 0 8px 24px rgba(30, 42, 37, 0.18));
+  overflow: hidden;
+  border: 1px solid var(--border, #e2e6dd);
+  display: none;
+  flex-direction: column;
+}
+
+#chatWidgetRoot.cw-open .cw-panel {
+  display: flex;
+}
+
+#chatWidgetRoot .cw-panel iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+
+@media (max-width: 420px) {
+  #chatWidgetRoot .cw-panel {
+    right: -8px;
+    width: calc(100vw - 24px);
+  }
+}
