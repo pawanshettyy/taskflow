@@ -1,9 +1,6 @@
 const crypto = require('crypto');
 
-const usersById = new Map();
-const userIdsByEmail = new Map();
-const sessions = new Map();
-const chatSessions = new Map();
+const db = require('../db/database');
 
 function normalizeEmail(email) {
   return String(email || '').trim().toLowerCase();
@@ -21,12 +18,6 @@ function passwordsMatch(password, user) {
 
 function createUser({ name, email, password }) {
   const normalizedEmail = normalizeEmail(email);
-  if (userIdsByEmail.has(normalizedEmail)) {
-    const error = new Error('An account with that email already exists.');
-    error.code = 'EMAIL_EXISTS';
-    throw error;
-  }
-
   const { salt, hash } = hashPassword(password);
   const user = {
     id: crypto.randomUUID(),
@@ -34,40 +25,67 @@ function createUser({ name, email, password }) {
     email: normalizedEmail,
     passwordSalt: salt,
     passwordHash: hash,
-    createdAt: new Date(),
+    createdAt: new Date().toISOString(),
   };
-  usersById.set(user.id, user);
-  userIdsByEmail.set(normalizedEmail, user.id);
+  try {
+    db.prepare(`
+      INSERT INTO users (id, name, email, password_salt, password_hash, created_at)
+      VALUES (@id, @name, @email, @passwordSalt, @passwordHash, @createdAt)
+    `).run(user);
+  } catch (error) {
+    if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') {
+      const duplicate = new Error('An account with that email already exists.');
+      duplicate.code = 'EMAIL_EXISTS';
+      throw duplicate;
+    }
+    throw error;
+  }
   return user;
 }
 
 function verifyCredentials(email, password) {
-  const userId = userIdsByEmail.get(normalizeEmail(email));
-  const user = userId ? usersById.get(userId) : null;
+  const row = db.prepare('SELECT * FROM users WHERE email = ?').get(normalizeEmail(email));
+  const user = row && {
+    id: row.id,
+    name: row.name,
+    email: row.email,
+    passwordSalt: row.password_salt,
+    passwordHash: row.password_hash,
+    createdAt: row.created_at,
+  };
   return user && passwordsMatch(password, user) ? user : null;
 }
 
 function createSession(userId) {
   const token = crypto.randomBytes(32).toString('hex');
-  sessions.set(token, { userId, createdAt: Date.now() });
+  db.prepare('INSERT INTO sessions (token, user_id, created_at) VALUES (?, ?, ?)').run(token, userId, new Date().toISOString());
   return token;
 }
 
 function getUserBySession(token) {
-  const session = sessions.get(token);
-  return session ? usersById.get(session.userId) || null : null;
+  if (!token) return null;
+  return db.prepare(`
+    SELECT u.id, u.name, u.email, u.created_at AS createdAt
+    FROM sessions s JOIN users u ON u.id = s.user_id
+    WHERE s.token = ?
+  `).get(token) || null;
 }
 
 function destroySession(token) {
-  sessions.delete(token);
+  if (token) db.prepare('DELETE FROM sessions WHERE token = ?').run(token);
 }
 
 function linkChatSession(sessionId, userId) {
-  if (sessionId) chatSessions.set(sessionId, userId);
+  if (!sessionId) return;
+  db.prepare(`
+    INSERT INTO chat_sessions (session_id, user_id, updated_at) VALUES (?, ?, ?)
+    ON CONFLICT(session_id) DO UPDATE SET user_id = excluded.user_id, updated_at = excluded.updated_at
+  `).run(sessionId, userId, new Date().toISOString());
 }
 
 function getUserIdForChatSession(sessionId) {
-  return chatSessions.get(sessionId) || null;
+  const row = db.prepare('SELECT user_id FROM chat_sessions WHERE session_id = ?').get(sessionId);
+  return row ? row.user_id : null;
 }
 
 module.exports = {
@@ -79,6 +97,5 @@ module.exports = {
   linkChatSession,
   getUserIdForChatSession,
   normalizeEmail,
-  _users: usersById,
-  _sessions: sessions,
+  _db: db,
 };

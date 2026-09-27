@@ -23,6 +23,7 @@ const rateLimit = require("express-rate-limit");
 const chatRoutes = require("./chatbot/src/routes/chatRoutes");
 const chatbotService = require("./chatbot/src/services/chatbotService");
 const authStore = require("./src/auth/authStore");
+const taskStore = require("./src/tasks/taskStore");
 const { attachUser, requireAuth, setSessionCookie, clearSessionCookie } = require("./src/auth/authMiddleware");
 const { notFoundHandler: chatbotNotFoundHandler, errorHandler: chatbotErrorHandler } = require("./chatbot/src/middleware/errorHandler");
 
@@ -31,48 +32,21 @@ const PORT = process.env.PORT || 3000;
 
 // ------------------------------------------------------------
 // In-memory "database"
-// Each task looks like: { id, title, completed, createdAt }
-// Using an array keeps the project beginner-friendly - data
-// resets whenever the server restarts, which is fine for a
-// college demo.
+// Users, sessions, and tasks are persisted in data/taskflow.sqlite.
 // ------------------------------------------------------------
-let tasks = [];
-
-// Keeps track of the next id to assign to a new task
-let nextId = 1;
-
 function getChatUserId(sessionId) {
   return authStore.getUserIdForChatSession(sessionId);
 }
 
 function userTasks(userId) {
-  return tasks.filter((task) => task.userId === userId);
+  return taskStore.listTasks(userId);
 }
 
 chatbotService.configureTaskCreator((title, dueDate, chatSessionId) => {
   const userId = getChatUserId(chatSessionId);
   if (!userId) return null;
-  const task = {
-    id: nextId++,
-    userId,
-    title,
-    completed: false,
-    dueDate: dueDate || null,
-    createdAt: new Date(),
-  };
-  tasks.push(task);
-  return task;
+  return taskStore.createTask(userId, title, dueDate || null);
 });
-
-function findTask(reference, userId) {
-  const normalized = String(reference).trim().toLowerCase();
-  const idMatch = normalized.match(/^#?(\d+)$/);
-  const ownedTasks = userTasks(userId);
-  return idMatch
-    ? ownedTasks.find((task) => task.id === Number(idMatch[1]))
-    : ownedTasks.find((task) => task.title.toLowerCase() === normalized)
-      || ownedTasks.find((task) => task.title.toLowerCase().includes(normalized));
-}
 
 chatbotService.configureTaskActions({
   list: (chatSessionId) => {
@@ -80,15 +54,12 @@ chatbotService.configureTaskActions({
     return userId ? userTasks(userId).filter((task) => !task.completed) : [];
   },
   complete: (reference, chatSessionId) => {
-    const task = findTask(reference, getChatUserId(chatSessionId));
-    if (task) task.completed = true;
-    return task || null;
+    const userId = getChatUserId(chatSessionId);
+    return userId ? taskStore.setCompleted(userId, reference, true) : null;
   },
   delete: (reference, chatSessionId) => {
-    const task = findTask(reference, getChatUserId(chatSessionId));
-    if (!task) return null;
-    tasks = tasks.filter((candidate) => candidate.id !== task.id);
-    return task;
+    const userId = getChatUserId(chatSessionId);
+    return userId ? taskStore.deleteTask(userId, reference) : null;
   },
 });
 
@@ -211,9 +182,9 @@ app.get("/", requireAuth, (req, res) => {
   const ownedTasks = userTasks(req.user.id);
   let visibleTasks = ownedTasks;
   if (filter === "active") {
-    visibleTasks = tasks.filter((t) => !t.completed);
+    visibleTasks = ownedTasks.filter((t) => !t.completed);
   } else if (filter === "completed") {
-    visibleTasks = tasks.filter((t) => t.completed);
+    visibleTasks = ownedTasks.filter((t) => t.completed);
   }
 
   // Show the newest tasks first
@@ -254,14 +225,7 @@ app.post("/tasks", requireAuth, (req, res) => {
   const title = (req.body.title || "").trim();
 
   if (title.length > 0) {
-    tasks.push({
-      id: nextId++,
-      userId: req.user.id,
-      title,
-      completed: false,
-      dueDate: /^\d{4}-\d{2}-\d{2}$/.test(req.body.dueDate || "") ? req.body.dueDate : null,
-      createdAt: new Date(),
-    });
+    taskStore.createTask(req.user.id, title, /^\d{4}-\d{2}-\d{2}$/.test(req.body.dueDate || "") ? req.body.dueDate : null);
   }
 
   res.redirect("/");
@@ -270,10 +234,10 @@ app.post("/tasks", requireAuth, (req, res) => {
 // POST /tasks/:id/complete -> toggle a task's completed state
 app.post("/tasks/:id/complete", requireAuth, (req, res) => {
   const id = parseInt(req.params.id, 10);
-  const task = tasks.find((t) => t.id === id && t.userId === req.user.id);
+  const task = taskStore.findTask(req.user.id, String(id));
 
   if (task) {
-    task.completed = !task.completed;
+    taskStore.setCompleted(req.user.id, String(id), !task.completed);
   }
 
   res.redirect(req.get("Referrer") || "/");
@@ -282,7 +246,7 @@ app.post("/tasks/:id/complete", requireAuth, (req, res) => {
 // POST /tasks/:id/delete -> remove a task
 app.post("/tasks/:id/delete", requireAuth, (req, res) => {
   const id = parseInt(req.params.id, 10);
-  tasks = tasks.filter((t) => !(t.id === id && t.userId === req.user.id));
+  taskStore.deleteTask(req.user.id, String(id));
 
   res.redirect(req.get("Referrer") || "/");
 });

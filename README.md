@@ -6,7 +6,7 @@ A clean, modern task manager built with **Node.js** and **Express.js**, created 
 
 ## Description
 
-TaskFlow lets you add tasks, mark them complete, delete them, and filter your list by All / Active / Completed. Data is kept in a simple in-memory array on the server, so there's no database setup required — the app is intentionally lightweight and easy to explain in a viva.
+TaskFlow lets you add tasks, mark them complete, delete them, and filter your list by All / Active / Completed. User accounts and tasks are persisted in a local SQLite database, keeping each user's workspace separate across server restarts.
 
 ## Features
 
@@ -32,7 +32,8 @@ TaskFlow lets you add tasks, mark them complete, delete them, and filter your li
 | Framework  | Express.js              |
 | Templating | EJS                     |
 | Frontend   | HTML5, CSS3, JavaScript |
-| Storage    | In-memory array (no DB) |
+| Storage    | SQLite database |
+| Database   | SQLite (`data/taskflow.sqlite`) |
 | Versioning | Git & GitHub            |
 
 ## Project Structure
@@ -76,7 +77,7 @@ npm start
 
 Then open your browser at **http://localhost:3000**
 
-Create an account from the sign-in page. Each account gets its own task list, calendar, and profile. This prototype stores accounts, sessions, and tasks in memory, so all data resets when the server restarts.
+Create an account from the sign-in page. Each account gets its own task list, calendar, and profile. SQLite stores accounts, sessions, chatbot ownership, and tasks in `data/taskflow.sqlite`.
 
 ### Optional Gemini support
 
@@ -130,5 +131,5 @@ Key commands used throughout development: `git init`, `git status`, `git add`, `
 - Persist tasks to a real database (e.g. SQLite or MongoDB)
 - Add due dates and priority levels
 - Add drag-and-drop task reordering
-- Persist users, sessions, and tasks in a database
+- Move SQLite to a managed production database and add automated backups
 - Add unit tests for the Express routes

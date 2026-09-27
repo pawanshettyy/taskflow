@@ -194,7 +194,7 @@ cp .env.example .env
 | `GEMINI_MODEL`               | `gemini-2.5-flash` | Gemini model name                             |
 | `GEMINI_TIMEOUT_MS`          | `8000`         | Maximum Gemini request time in milliseconds       |
 
-No API key is required for the local NLP engine. The standalone chatbot server does not have a TaskFlow task store; task mutations are enabled when it is mounted by the root TaskFlow app.
+No API key is required for the local NLP engine. The standalone chatbot server does not have a TaskFlow task store; task mutations are enabled when it is mounted by the root TaskFlow app, which persists them in SQLite.
 
 ---
 
