@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="/css/style.css" />
 </head>
 <body>
-  <header class="navbar"><div class="navbar-inner"><a class="brand" href="/"><span class="brand-mark">✓</span> TaskFlow</a><nav class="nav-links"><a href="/">List</a><a class="active" href="/calendar">Calendar</a><a href="/profile">Profile</a><form action="/auth/logout" method="POST"><button type="submit">Log out</button></form></nav></div></header>
+  <header class="navbar"><div class="navbar-inner"><a class="brand" href="/"><span class="brand-mark">✓</span> TaskFlow</a><nav class="nav-links"><a href="/">List</a><a class="active" href="/calendar">Calendar</a><a href="/profile">Profile</a><form action="/auth/logout" method="POST"><input type="hidden" name="_csrf" value="<%= csrfToken %>" /><button type="submit">Log out</button></form></nav></div></header>
   <main class="container calendar-page">
     <div class="page-heading"><div><p class="eyebrow">Plan by date</p><h1><%= monthLabel %></h1></div><div class="month-nav"><a href="/calendar?month=<%= previous %>" aria-label="Previous month">←</a><a href="/calendar?month=<%= next %>" aria-label="Next month">→</a></div></div>
     <section class="calendar-grid">

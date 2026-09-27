@@ -23,6 +23,11 @@
 
   let sessionId = getSessionId();
 
+  function getCookie(name) {
+    const entry = document.cookie.split('; ').find((value) => value.startsWith(name + '='));
+    return entry ? decodeURIComponent(entry.slice(name.length + 1)) : '';
+  }
+
   function escapeHtml(str) {
     const div = document.createElement('div');
     div.textContent = str;
@@ -87,6 +92,7 @@
         headers: {
           'Content-Type': 'application/json',
           'x-session-id': sessionId,
+          'x-csrf-token': getCookie('taskflow_csrf'),
         },
         body: JSON.stringify({ message: text }),
       });
@@ -151,7 +157,7 @@
     try {
       await fetch('/api/chat/session', {
         method: 'DELETE',
-        headers: { 'x-session-id': sessionId },
+        headers: { 'x-session-id': sessionId, 'x-csrf-token': getCookie('taskflow_csrf') },
       });
     } catch (err) {
       // Non-fatal: even if the server call fails, we still clear the UI.

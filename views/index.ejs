@@ -27,7 +27,7 @@
         <a class="active" href="/">List</a>
         <a href="/calendar">Calendar</a>
         <a href="/profile"><%= user.name %></a>
-        <form action="/auth/logout" method="POST"><button type="submit">Log out</button></form>
+        <form action="/auth/logout" method="POST"><input type="hidden" name="_csrf" value="<%= csrfToken %>" /><button type="submit">Log out</button></form>
       </nav>
     </div>
   </header>
@@ -42,6 +42,7 @@
 
     <!-- ===== Add Task Form ===== -->
     <form class="add-task-form" action="/tasks" method="POST">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
       <input
         type="text"
         name="title"
@@ -95,6 +96,7 @@
         <% tasks.forEach(function(task) { %>
           <li class="task-card <%= task.completed ? 'completed' : '' %>">
             <form class="complete-form" action="/tasks/<%= task.id %>/complete" method="POST">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
               <button type="submit" class="check-btn" aria-label="Toggle complete">
                 <% if (task.completed) { %>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -109,6 +111,7 @@
             <details class="task-edit">
               <summary>Edit</summary>
               <form action="/tasks/<%= task.id %>/edit" method="POST">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
                 <input type="text" name="title" value="<%= task.title %>" aria-label="Task title" required />
                 <input type="date" name="dueDate" value="<%= task.dueDate || '' %>" aria-label="Due date" />
                 <button type="submit">Save</button>
@@ -116,6 +119,7 @@
             </details>
 
             <form class="delete-form" action="/tasks/<%= task.id %>/delete" method="POST">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
               <button type="submit" class="delete-btn" aria-label="Delete task">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m2 0v13a1 1 0 01-1 1H8a1 1 0 01-1-1V7h10z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>

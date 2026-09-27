@@ -24,7 +24,7 @@ const chatRoutes = require("./chatbot/src/routes/chatRoutes");
 const chatbotService = require("./chatbot/src/services/chatbotService");
 const authStore = require("./src/auth/authStore");
 const taskStore = require("./src/tasks/taskStore");
-const { attachUser, requireAuth, setSessionCookie, clearSessionCookie } = require("./src/auth/authMiddleware");
+const { attachUser, requireAuth, requireCsrf, setSessionCookie, clearSessionCookie } = require("./src/auth/authMiddleware");
 const { notFoundHandler: chatbotNotFoundHandler, errorHandler: chatbotErrorHandler } = require("./chatbot/src/middleware/errorHandler");
 
 const app = express();
@@ -80,7 +80,7 @@ app.use(attachUser);
 
 // Link the chatbot's client session to the authenticated account before any
 // chatbot task action is processed.
-app.use("/api/chat", requireAuth, (req, res, next) => {
+app.use("/api/chat", requireAuth, requireCsrf, (req, res, next) => {
   authStore.linkChatSession(req.get("x-session-id"), req.user.id);
   next();
 });
@@ -174,7 +174,7 @@ app.post("/auth/register", (req, res) => {
   }
 });
 
-app.post("/auth/logout", (req, res) => {
+app.post("/auth/logout", requireAuth, requireCsrf, (req, res) => {
   const token = req.headers.cookie?.split(";").map((value) => value.trim()).find((value) => value.startsWith("taskflow_session="));
   if (token) authStore.destroySession(decodeURIComponent(token.slice("taskflow_session=".length)));
   clearSessionCookie(res);
@@ -200,12 +200,26 @@ app.get("/", requireAuth, (req, res) => {
     filter,
     stats: getStats(ownedTasks),
     user: req.user,
+    csrfToken: req.csrfToken,
   });
 });
 
 app.get("/profile", requireAuth, (req, res) => {
   const ownedTasks = userTasks(req.user.id);
-  res.render("profile", { user: req.user, stats: getStats(ownedTasks) });
+  res.render("profile", { user: req.user, stats: getStats(ownedTasks), csrfToken: req.csrfToken, passwordError: null, passwordMessage: null });
+});
+
+app.post("/profile/password", requireAuth, requireCsrf, (req, res) => {
+  const currentPassword = String(req.body.currentPassword || "");
+  const newPassword = String(req.body.newPassword || "");
+  const ownedTasks = userTasks(req.user.id);
+  if (newPassword.length < 8) {
+    return res.status(400).render("profile", { user: req.user, stats: getStats(ownedTasks), csrfToken: req.csrfToken, passwordError: "The new password must be at least 8 characters.", passwordMessage: null });
+  }
+  if (!authStore.changePassword(req.user.id, currentPassword, newPassword)) {
+    return res.status(400).render("profile", { user: req.user, stats: getStats(ownedTasks), csrfToken: req.csrfToken, passwordError: "The current password is incorrect.", passwordMessage: null });
+  }
+  return res.render("profile", { user: req.user, stats: getStats(ownedTasks), csrfToken: req.csrfToken, passwordError: null, passwordMessage: "Password updated successfully." });
 });
 
 app.get("/calendar", requireAuth, (req, res) => {
@@ -222,11 +236,11 @@ app.get("/calendar", requireAuth, (req, res) => {
   while (cells.length % 7 !== 0) cells.push(null);
   const previous = new Date(year, month - 2, 1).toISOString().slice(0, 7);
   const next = new Date(year, month, 1).toISOString().slice(0, 7);
-  res.render("calendar", { user: req.user, monthValue, monthLabel: firstDay.toLocaleString("en-US", { month: "long", year: "numeric" }), cells, previous, next });
+  res.render("calendar", { user: req.user, csrfToken: req.csrfToken, monthValue, monthLabel: firstDay.toLocaleString("en-US", { month: "long", year: "numeric" }), cells, previous, next });
 });
 
 // POST /tasks -> add a new task
-app.post("/tasks", requireAuth, (req, res) => {
+app.post("/tasks", requireAuth, requireCsrf, (req, res) => {
   const title = (req.body.title || "").trim();
 
   if (title.length > 0) {
@@ -237,7 +251,7 @@ app.post("/tasks", requireAuth, (req, res) => {
 });
 
 // POST /tasks/:id/complete -> toggle a task's completed state
-app.post("/tasks/:id/complete", requireAuth, (req, res) => {
+app.post("/tasks/:id/complete", requireAuth, requireCsrf, (req, res) => {
   const id = parseInt(req.params.id, 10);
   const task = taskStore.findTask(req.user.id, String(id));
 
@@ -248,7 +262,7 @@ app.post("/tasks/:id/complete", requireAuth, (req, res) => {
   res.redirect(req.get("Referrer") || "/");
 });
 
-app.post("/tasks/:id/edit", requireAuth, (req, res) => {
+app.post("/tasks/:id/edit", requireAuth, requireCsrf, (req, res) => {
   const title = String(req.body.title || "").trim();
   const dueDate = req.body.dueDate || null;
   if (title.length > 0) {
@@ -258,7 +272,7 @@ app.post("/tasks/:id/edit", requireAuth, (req, res) => {
 });
 
 // POST /tasks/:id/delete -> remove a task
-app.post("/tasks/:id/delete", requireAuth, (req, res) => {
+app.post("/tasks/:id/delete", requireAuth, requireCsrf, (req, res) => {
   const id = parseInt(req.params.id, 10);
   taskStore.deleteTask(req.user.id, String(id));
 

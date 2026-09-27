@@ -1,6 +1,7 @@
 const authStore = require('./authStore');
 
 const SESSION_COOKIE = 'taskflow_session';
+const CSRF_COOKIE = 'taskflow_csrf';
 
 function readCookie(req, name) {
   const cookies = String(req.headers.cookie || '').split(';');
@@ -10,6 +11,7 @@ function readCookie(req, name) {
 
 function attachUser(req, res, next) {
   req.user = authStore.getUserBySession(readCookie(req, SESSION_COOKIE));
+  req.csrfToken = readCookie(req, CSRF_COOKIE);
   next();
 }
 
@@ -19,18 +21,34 @@ function requireAuth(req, res, next) {
 }
 
 function setSessionCookie(res, token) {
-  res.setHeader('Set-Cookie', `${SESSION_COOKIE}=${encodeURIComponent(token)}; HttpOnly; Path=/; SameSite=Lax`);
+  const cookies = [
+    `${SESSION_COOKIE}=${encodeURIComponent(token.token)}; HttpOnly; Path=/; SameSite=Lax`,
+    `${CSRF_COOKIE}=${encodeURIComponent(token.csrfToken)}; Path=/; SameSite=Lax`,
+  ];
+  res.setHeader('Set-Cookie', cookies);
 }
 
 function clearSessionCookie(res) {
-  res.setHeader('Set-Cookie', `${SESSION_COOKIE}=; HttpOnly; Path=/; SameSite=Lax; Max-Age=0`);
+  res.setHeader('Set-Cookie', [
+    `${SESSION_COOKIE}=; HttpOnly; Path=/; SameSite=Lax; Max-Age=0`,
+    `${CSRF_COOKIE}=; Path=/; SameSite=Lax; Max-Age=0`,
+  ]);
+}
+
+function requireCsrf(req, res, next) {
+  const sessionToken = readCookie(req, SESSION_COOKIE);
+  const suppliedToken = req.get('x-csrf-token') || req.body?._csrf;
+  if (authStore.verifyCsrfToken(sessionToken, suppliedToken)) return next();
+  return res.status(403).send('Forbidden: invalid CSRF token.');
 }
 
 module.exports = {
   SESSION_COOKIE,
+  CSRF_COOKIE,
   attachUser,
   requireAuth,
   readCookie,
   setSessionCookie,
   clearSessionCookie,
+  requireCsrf,
 };

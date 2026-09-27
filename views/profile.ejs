@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="/css/style.css" />
 </head>
 <body>
-  <header class="navbar"><div class="navbar-inner"><a class="brand" href="/"><span class="brand-mark">✓</span> TaskFlow</a><nav class="nav-links"><a href="/">List</a><a href="/calendar">Calendar</a><a class="active" href="/profile">Profile</a><form action="/auth/logout" method="POST"><button type="submit">Log out</button></form></nav></div></header>
+  <header class="navbar"><div class="navbar-inner"><a class="brand" href="/"><span class="brand-mark">✓</span> TaskFlow</a><nav class="nav-links"><a href="/">List</a><a href="/calendar">Calendar</a><a class="active" href="/profile">Profile</a><form action="/auth/logout" method="POST"><input type="hidden" name="_csrf" value="<%= csrfToken %>" /><button type="submit">Log out</button></form></nav></div></header>
   <main class="container profile-page">
     <p class="eyebrow">Personal profile</p>
     <h1><%= user.name %></h1>
@@ -17,7 +17,16 @@
       <div class="profile-stat"><strong><%= stats.active %></strong><span>Active tasks</span></div>
       <div class="profile-stat"><strong><%= stats.completed %></strong><span>Completed tasks</span></div>
     </section>
-    <p class="profile-note">Your account and tasks are stored in memory for this local prototype and reset when the server restarts.</p>
+    <% if (passwordError) { %><div class="form-error"><%= passwordError %></div><% } %>
+    <% if (passwordMessage) { %><p class="profile-note"><%= passwordMessage %></p><% } %>
+    <form class="auth-form profile-password-form" action="/profile/password" method="POST">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+      <h2>Change password</h2>
+      <label>Current password<input type="password" name="currentPassword" required /></label>
+      <label>New password<input type="password" name="newPassword" minlength="8" required /></label>
+      <button class="primary-button" type="submit">Update password</button>
+    </form>
+    <p class="profile-note">Your account and tasks are stored in SQLite. Sessions expire after the configured authentication session lifetime.</p>
   </main>
 </body>
 </html>

@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 
 const db = require('../db/database');
+const SESSION_TTL_MS = parseInt(process.env.AUTH_SESSION_TTL_MS, 10) || 7 * 24 * 60 * 60 * 1000;
 
 function normalizeEmail(email) {
   return String(email || '').trim().toLowerCase();
@@ -58,17 +59,54 @@ function verifyCredentials(email, password) {
 
 function createSession(userId) {
   const token = crypto.randomBytes(32).toString('hex');
-  db.prepare('INSERT INTO sessions (token, user_id, created_at) VALUES (?, ?, ?)').run(token, userId, new Date().toISOString());
-  return token;
+  const csrfToken = crypto.randomBytes(32).toString('hex');
+  db.prepare('INSERT INTO sessions (token, user_id, csrf_token, created_at) VALUES (?, ?, ?, ?)').run(token, userId, csrfToken, new Date().toISOString());
+  return { token, csrfToken };
 }
 
-function getUserBySession(token) {
+function getSession(token) {
   if (!token) return null;
-  return db.prepare(`
-    SELECT u.id, u.name, u.email, u.created_at AS createdAt
+  const row = db.prepare(`
+    SELECT s.created_at AS sessionCreatedAt, s.csrf_token AS csrfToken,
+      u.id, u.name, u.email, u.created_at AS createdAt
     FROM sessions s JOIN users u ON u.id = s.user_id
     WHERE s.token = ?
   `).get(token) || null;
+  if (!row) return null;
+  if (Date.now() - Date.parse(row.sessionCreatedAt) > SESSION_TTL_MS) {
+    destroySession(token);
+    return null;
+  }
+  return row;
+}
+
+function getUserBySession(token) {
+  const session = getSession(token);
+  if (!session) return null;
+  return { id: session.id, name: session.name, email: session.email, createdAt: session.createdAt };
+}
+
+function getCsrfToken(token) {
+  const session = getSession(token);
+  return session ? session.csrfToken : null;
+}
+
+function verifyCsrfToken(token, suppliedToken) {
+  const expected = getCsrfToken(token);
+  if (!expected || !suppliedToken || expected.length !== suppliedToken.length) return false;
+  return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(suppliedToken));
+}
+
+function changePassword(userId, currentPassword, newPassword) {
+  const row = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
+  const user = row && {
+    passwordSalt: row.password_salt,
+    passwordHash: row.password_hash,
+  };
+  if (!user || !passwordsMatch(currentPassword, user)) return false;
+  const { salt, hash } = hashPassword(newPassword);
+  db.prepare('UPDATE users SET password_salt = ?, password_hash = ? WHERE id = ?').run(salt, hash, userId);
+  return true;
 }
 
 function destroySession(token) {
@@ -93,6 +131,9 @@ module.exports = {
   verifyCredentials,
   createSession,
   getUserBySession,
+  getCsrfToken,
+  verifyCsrfToken,
+  changePassword,
   destroySession,
   linkChatSession,
   getUserIdForChatSession,

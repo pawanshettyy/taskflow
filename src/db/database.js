@@ -24,6 +24,7 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS sessions (
     token TEXT PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    csrf_token TEXT,
     created_at TEXT NOT NULL
   );
 
@@ -45,5 +46,13 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_tasks_user_id ON tasks(user_id);
   CREATE INDEX IF NOT EXISTS idx_tasks_due_date ON tasks(user_id, due_date);
 `);
+
+try {
+  db.exec('ALTER TABLE sessions ADD COLUMN csrf_token TEXT');
+} catch (error) {
+  if (!String(error.message).includes('duplicate column name')) throw error;
+}
+
+db.exec("UPDATE sessions SET csrf_token = lower(hex(randomblob(32))) WHERE csrf_token IS NULL");
 
 module.exports = db;
