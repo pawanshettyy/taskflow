@@ -57,8 +57,10 @@ async function processMessage(sessionId, rawMessage) {
     if (!title) {
       localReply = 'What task should I add?';
     } else if (taskCreator) {
-      createdTask = taskCreator(title);
-      localReply = `Added task: "${createdTask.title}".`;
+      createdTask = taskCreator(title, sessionId);
+      localReply = createdTask
+        ? `Added task: "${createdTask.title}".`
+        : 'Please sign in to add tasks to your personal list.';
     } else {
       localReply = 'Task creation is available from the TaskFlow app. What task should I add?';
     }
@@ -66,7 +68,7 @@ async function processMessage(sessionId, rawMessage) {
     if (!taskActions.list) {
       localReply = 'Task list actions are available from the TaskFlow app.';
     } else {
-      listedTasks = taskActions.list();
+      listedTasks = taskActions.list(sessionId);
       localReply = listedTasks.length > 0
         ? `Your tasks: ${listedTasks.map((task) => task.title).join(', ')}.`
         : 'You have no tasks yet.';
@@ -81,7 +83,7 @@ async function processMessage(sessionId, rawMessage) {
     } else if (!action) {
       localReply = 'Task actions are available from the TaskFlow app.';
     } else {
-      changedTask = action(reference);
+      changedTask = action(reference, sessionId);
       if (!changedTask) {
         localReply = `I couldn't find a task matching "${reference}".`;
       } else {

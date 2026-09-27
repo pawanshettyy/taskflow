@@ -23,9 +23,12 @@
         </span>
         TaskFlow
       </div>
-      <div class="navbar-counter">
-        <%= stats.active %> task<%= stats.active === 1 ? '' : 's' %> left
-      </div>
+      <nav class="nav-links">
+        <a class="active" href="/">List</a>
+        <a href="/calendar">Calendar</a>
+        <a href="/profile"><%= user.name %></a>
+        <form action="/auth/logout" method="POST"><button type="submit">Log out</button></form>
+      </nav>
     </div>
   </header>
 
@@ -46,6 +49,7 @@
         autocomplete="off"
         required
       />
+      <input type="date" name="dueDate" aria-label="Due date" />
       <button type="submit">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
@@ -100,7 +104,7 @@
               </button>
             </form>
 
-            <span class="task-title"><%= task.title %></span>
+            <span class="task-title"><%= task.title %><% if (task.dueDate) { %><small>Due <%= task.dueDate %></small><% } %></span>
 
             <form class="delete-form" action="/tasks/<%= task.id %>/delete" method="POST">
               <button type="submit" class="delete-btn" aria-label="Delete task">

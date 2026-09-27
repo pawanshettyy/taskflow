@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign in | TaskFlow</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body class="auth-page">
+  <main class="auth-shell">
+    <a class="brand auth-brand" href="/auth/login"><span class="brand-mark">✓</span> TaskFlow</a>
+    <section class="auth-panel">
+      <p class="eyebrow">Your quiet workspace</p>
+      <h1>Welcome back.</h1>
+      <p class="auth-copy">Sign in to see your tasks, calendar, and personal workspace.</p>
+      <% if (error) { %><div class="form-error"><%= error %></div><% } %>
+      <form class="auth-form" action="/auth/login" method="POST">
+        <label>Email<input type="email" name="email" autocomplete="email" required /></label>
+        <label>Password<input type="password" name="password" autocomplete="current-password" required /></label>
+        <button class="primary-button" type="submit">Sign in</button>
+      </form>
+      <p class="auth-switch">New to TaskFlow? <a href="/auth/register">Create an account</a></p>
+    </section>
+  </main>
+</body>
+</html>

@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node app.js",
     "dev": "node app.js",
+    "test": "jest --runInBand",
     "test:chatbot": "jest chatbot/tests --runInBand"
   },
   "keywords": ["nodejs", "express", "task-manager", "college-project", "chatbot", "nlp"],

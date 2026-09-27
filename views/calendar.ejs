@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calendar | TaskFlow</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header class="navbar"><div class="navbar-inner"><a class="brand" href="/"><span class="brand-mark">✓</span> TaskFlow</a><nav class="nav-links"><a href="/">List</a><a class="active" href="/calendar">Calendar</a><a href="/profile">Profile</a><form action="/auth/logout" method="POST"><button type="submit">Log out</button></form></nav></div></header>
+  <main class="container calendar-page">
+    <div class="page-heading"><div><p class="eyebrow">Plan by date</p><h1><%= monthLabel %></h1></div><div class="month-nav"><a href="/calendar?month=<%= previous %>" aria-label="Previous month">←</a><a href="/calendar?month=<%= next %>" aria-label="Next month">→</a></div></div>
+    <section class="calendar-grid">
+      <% ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach(function(day) { %><div class="calendar-weekday"><%= day %></div><% }); %>
+      <% cells.forEach(function(cell) { %>
+        <% if (!cell) { %><div class="calendar-cell calendar-cell--empty"></div><% } else { %>
+          <div class="calendar-cell"><strong><%= cell.day %></strong><% cell.tasks.forEach(function(task) { %><div class="calendar-task"><%= task.title %></div><% }); %></div>
+        <% } %>
+      <% }); %>
+    </section>
+    <p class="calendar-note">Add a due date from the list view to place a task on your calendar.</p>
+  </main>
+</body>
+</html>

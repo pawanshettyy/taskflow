@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Create account | TaskFlow</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body class="auth-page">
+  <main class="auth-shell">
+    <a class="brand auth-brand" href="/auth/login"><span class="brand-mark">✓</span> TaskFlow</a>
+    <section class="auth-panel">
+      <p class="eyebrow">A workspace that is yours</p>
+      <h1>Create your account.</h1>
+      <p class="auth-copy">Keep your todos, calendar, and progress together in one place.</p>
+      <% if (error) { %><div class="form-error"><%= error %></div><% } %>
+      <form class="auth-form" action="/auth/register" method="POST">
+        <label>Name<input type="text" name="name" value="<%= values.name || '' %>" autocomplete="name" required /></label>
+        <label>Email<input type="email" name="email" value="<%= values.email || '' %>" autocomplete="email" required /></label>
+        <label>Password<input type="password" name="password" minlength="8" autocomplete="new-password" required /></label>
+        <button class="primary-button" type="submit">Create account</button>
+      </form>
+      <p class="auth-switch">Already have an account? <a href="/auth/login">Sign in</a></p>
+    </section>
+  </main>
+</body>
+</html>

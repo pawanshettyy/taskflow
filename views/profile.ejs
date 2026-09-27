@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Profile | TaskFlow</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header class="navbar"><div class="navbar-inner"><a class="brand" href="/"><span class="brand-mark">✓</span> TaskFlow</a><nav class="nav-links"><a href="/">List</a><a href="/calendar">Calendar</a><a class="active" href="/profile">Profile</a><form action="/auth/logout" method="POST"><button type="submit">Log out</button></form></nav></div></header>
+  <main class="container profile-page">
+    <p class="eyebrow">Personal profile</p>
+    <h1><%= user.name %></h1>
+    <p class="hero-sub"><%= user.email %></p>
+    <section class="profile-grid">
+      <div class="profile-stat"><strong><%= stats.total %></strong><span>Total tasks</span></div>
+      <div class="profile-stat"><strong><%= stats.active %></strong><span>Active tasks</span></div>
+      <div class="profile-stat"><strong><%= stats.completed %></strong><span>Completed tasks</span></div>
+    </section>
+    <p class="profile-note">Your account and tasks are stored in memory for this local prototype and reset when the server restarts.</p>
+  </main>
+</body>
+</html>

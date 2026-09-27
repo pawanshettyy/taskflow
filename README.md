@@ -17,6 +17,9 @@ TaskFlow lets you add tasks, mark them complete, delete them, and filter your li
 - Live task counters (total / active / completed)
 - Friendly empty-state message when a list is empty
 - Fully responsive layout (desktop, tablet, mobile)
+- Account registration and login with separate personal workspaces
+- Profile view with task statistics
+- Calendar view for tasks with due dates
 - Optional Gemini-powered response polishing for recognized chatbot intents, with local fallback and app-scope restrictions
 - Embedded support chatbot can add, list, complete, and delete tasks through natural-language commands
 - Clean, modern UI with a teal/amber color palette, custom typography, hover states and smooth transitions
@@ -44,7 +47,11 @@ taskflow/
 │       └── script.js      # Small client-side enhancements
 │
 ├── views/
-│   └── index.ejs           # Main (and only) page template
+│   ├── index.ejs           # Authenticated task list view
+│   ├── calendar.ejs        # Monthly due-date calendar
+│   ├── profile.ejs         # User profile and task statistics
+│   ├── login.ejs           # Sign-in form
+│   └── register.ejs        # Account creation form
 │
 ├── app.js                  # Express server, routes, in-memory task data
 ├── chatbot/                # Integrated NLP chatbot and widget
@@ -69,6 +76,8 @@ npm start
 
 Then open your browser at **http://localhost:3000**
 
+Create an account from the sign-in page. Each account gets its own task list, calendar, and profile. This prototype stores accounts, sessions, and tasks in memory, so all data resets when the server restarts.
+
 ### Optional Gemini support
 
 Copy `.env.example` to `.env` and set `GEMINI_API_KEY` to enable Gemini response polishing. Gemini receives only recognized intents, the sanitized message, and the local reference answer. It cannot create or modify tasks, unknown intents never call it, and network/API failures fall back to local responses. Keep the key server-side and never commit it.
@@ -91,9 +100,16 @@ After a task is added, completed, or deleted, the main page refreshes so the lis
 | Method | Route                    | Purpose                        |
 |--------|---------------------------|---------------------------------|
 | GET    | `/`                        | Show all tasks (supports `?filter=all\|active\|completed`) |
-| POST   | `/tasks`                   | Add a new task                 |
+| POST   | `/tasks`                   | Add a personal task, optionally with `dueDate=YYYY-MM-DD` |
 | POST   | `/tasks/:id/complete`      | Toggle a task's completed state |
 | POST   | `/tasks/:id/delete`        | Delete a task                  |
+| GET    | `/calendar`                | Show the signed-in user's monthly calendar |
+| GET    | `/profile`                 | Show the signed-in user's profile and statistics |
+| GET    | `/auth/login`              | Sign-in page                  |
+| POST   | `/auth/login`              | Create an authenticated session |
+| GET    | `/auth/register`           | Registration page             |
+| POST   | `/auth/register`           | Create a user account         |
+| POST   | `/auth/logout`             | End the current session       |
 
 ## Git Workflow Used
 
@@ -113,5 +129,5 @@ Key commands used throughout development: `git init`, `git status`, `git add`, `
 - Persist tasks to a real database (e.g. SQLite or MongoDB)
 - Add due dates and priority levels
 - Add drag-and-drop task reordering
-- Add user accounts (basic authentication)
+- Persist users, sessions, and tasks in a database
 - Add unit tests for the Express routes
