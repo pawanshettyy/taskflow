@@ -49,7 +49,7 @@ function userTasks(userId) {
   return tasks.filter((task) => task.userId === userId);
 }
 
-chatbotService.configureTaskCreator((title, chatSessionId) => {
+chatbotService.configureTaskCreator((title, dueDate, chatSessionId) => {
   const userId = getChatUserId(chatSessionId);
   if (!userId) return null;
   const task = {
@@ -57,7 +57,7 @@ chatbotService.configureTaskCreator((title, chatSessionId) => {
     userId,
     title,
     completed: false,
-    dueDate: null,
+    dueDate: dueDate || null,
     createdAt: new Date(),
   };
   tasks.push(task);

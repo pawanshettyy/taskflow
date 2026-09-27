@@ -1,4 +1,4 @@
-const { extractTaskTitle } = require('../src/services/taskActions');
+const { extractTaskTitle, extractDueDate, extractTaskDetails } = require('../src/services/taskActions');
 
 describe('Task action parsing', () => {
   test('extracts a title from an add-task request', () => {
@@ -11,5 +11,14 @@ describe('Task action parsing', () => {
 
   test('returns an empty title when the request needs clarification', () => {
     expect(extractTaskTitle('add a task for me')).toBe('');
+  });
+
+  test('extracts an explicit due date and removes it from the title', () => {
+    const details = extractTaskDetails('add a task to submit report due 2099-12-25');
+    expect(details).toEqual({ title: 'submit report', dueDate: '2099-12-25' });
+  });
+
+  test('understands tomorrow for calendar scheduling', () => {
+    expect(extractDueDate('add a task to call the dentist tomorrow', new Date(2099, 11, 24))).toBe('2099-12-25');
   });
 });

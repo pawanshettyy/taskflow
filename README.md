@@ -88,6 +88,7 @@ The support widget is connected to the same in-memory task list as the main app.
 
 ```text
 add a task to buy groceries
+add a task to review the report due 2026-10-05
 show my tasks
 complete a task       -> then provide the task name
 delete task Read notes

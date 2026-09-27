@@ -13,7 +13,7 @@ const { classifyIntent } = require('../nlp/intentClassifier');
 const { extractEntities } = require('../nlp/entityExtractor');
 const { generateResponse } = require('../nlp/responseGenerator');
 const { generateReply: generateGeminiReply } = require('./geminiClient');
-const { extractTaskTitle, extractTaskReference } = require('./taskActions');
+const { extractTaskDetails, extractTaskReference } = require('./taskActions');
 const sessionStore = require('./sessionStore');
 
 const MAX_MESSAGE_LENGTH = 500;
@@ -53,11 +53,12 @@ async function processMessage(sessionId, rawMessage) {
 
   let localReply = generateResponse({ intent, entities, context });
   if (effectiveIntent === 'add_task') {
-    const title = extractTaskTitle(message) || (isPendingTaskTitle ? message.trim() : '');
+    const details = extractTaskDetails(message);
+    const title = details.title || (isPendingTaskTitle ? message.trim() : '');
     if (!title) {
       localReply = 'What task should I add?';
     } else if (taskCreator) {
-      createdTask = taskCreator(title, sessionId);
+      createdTask = taskCreator(title, details.dueDate, sessionId);
       localReply = createdTask
         ? `Added task: "${createdTask.title}".`
         : 'Please sign in to add tasks to your personal list.';
@@ -70,7 +71,7 @@ async function processMessage(sessionId, rawMessage) {
     } else {
       listedTasks = taskActions.list(sessionId);
       localReply = listedTasks.length > 0
-        ? `Your tasks: ${listedTasks.map((task) => task.title).join(', ')}.`
+        ? `Your tasks: ${listedTasks.map((task) => task.dueDate ? `${task.title} (due ${task.dueDate})` : task.title).join(', ')}.`
         : 'You have no tasks yet.';
     }
   } else if (effectiveIntent === 'complete_task' || effectiveIntent === 'delete_task') {

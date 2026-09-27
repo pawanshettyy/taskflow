@@ -44,4 +44,22 @@ describe('authentication and personal workspace', () => {
     expect(profile.text).toContain('First User');
     expect(profile.text).toContain('Total tasks');
   });
+
+  test('adds a dated personal task through the authenticated chatbot', async () => {
+    const cookie = await registerUser('Chat Calendar User');
+    const chatSessionId = `chat-calendar-${Date.now()}`;
+    const response = await request(app)
+      .post('/api/chat')
+      .set('Cookie', cookie)
+      .set('x-session-id', chatSessionId)
+      .send({ message: 'add a task to review calendar plans due 2099-12-25' });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body.intent).toBe('add_task');
+    expect(response.body.task.title).toBe('review calendar plans');
+    expect(response.body.task.dueDate).toBe('2099-12-25');
+
+    const calendar = await request(app).get('/calendar?month=2099-12').set('Cookie', cookie);
+    expect(calendar.text).toContain('review calendar plans');
+  });
 });

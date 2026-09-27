@@ -26,6 +26,7 @@ It is built to be **explainable and extensible** rather than a black box — eve
 - Modular NLP pipeline: preprocessing → tokenization → intent classification → entity extraction → response generation
 - 15 trainable intents + a fallback path for low-confidence/unknown input
 - TaskFlow chatflows: add, list, complete, and delete tasks, including follow-up prompts for missing task names
+- Calendar-aware task creation with explicit dates (`YYYY-MM-DD`) and phrases such as `today`, `tomorrow`, `next week`, and weekdays
 - Handles paraphrased questions ("what time do you open" vs "when are you available")
 - Lightweight spell-correction for minor typos (Levenshtein distance against the training vocabulary)
 - Regex-based entity extraction (emails, phone numbers, order IDs, monetary amounts, dates, service names)
