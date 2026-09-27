@@ -18,6 +18,7 @@ TaskFlow lets you add tasks, mark them complete, delete them, and filter your li
 - Friendly empty-state message when a list is empty
 - Fully responsive layout (desktop, tablet, mobile)
 - Optional Gemini-powered response polishing for recognized chatbot intents, with local fallback and app-scope restrictions
+- Embedded support chatbot can add, list, complete, and delete tasks through natural-language commands
 - Clean, modern UI with a teal/amber color palette, custom typography, hover states and smooth transitions
 
 ## Technologies Used
@@ -46,6 +47,7 @@ taskflow/
 │   └── index.ejs           # Main (and only) page template
 │
 ├── app.js                  # Express server, routes, in-memory task data
+├── chatbot/                # Integrated NLP chatbot and widget
 ├── package.json             # Project metadata and dependencies
 ├── .gitignore
 └── README.md
@@ -69,7 +71,20 @@ Then open your browser at **http://localhost:3000**
 
 ### Optional Gemini support
 
-Copy `.env.example` to `.env` and set `GEMINI_API_KEY` to enable Gemini responses. The chatbot sends Gemini only a recognized intent, the sanitized user message, and the local reference answer. Unknown intents never call Gemini, and network/API failures fall back to the built-in response generator.
+Copy `.env.example` to `.env` and set `GEMINI_API_KEY` to enable Gemini response polishing. Gemini receives only recognized intents, the sanitized message, and the local reference answer. It cannot create or modify tasks, unknown intents never call it, and network/API failures fall back to local responses. Keep the key server-side and never commit it.
+
+### Chatbot task commands
+
+The support widget is connected to the same in-memory task list as the main app. Examples:
+
+```text
+add a task to buy groceries
+show my tasks
+complete a task       -> then provide the task name
+delete task Read notes
+```
+
+After a task is added, completed, or deleted, the main page refreshes so the list and counters stay synchronized.
 
 ## Routes
 

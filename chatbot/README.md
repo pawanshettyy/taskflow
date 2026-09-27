@@ -13,7 +13,8 @@ This project implements a chatbot that:
 3. Classifies the user's **intent** (what they want) using a Naive Bayes classifier.
 4. Extracts useful **entities** (emails, order IDs, amounts, service names, dates).
 5. Generates a context-aware reply, remembering the previous turn in the same session.
-6. Returns the reply, intent, and confidence score as JSON over a REST API.
+6. Performs supported TaskFlow task actions through a host callback when integrated with the main app.
+7. Returns the reply, intent, confidence score, and action metadata as JSON over a REST API.
 
 It is built to be **explainable and extensible** rather than a black box — every stage of the pipeline lives in its own file.
 
@@ -23,7 +24,8 @@ It is built to be **explainable and extensible** rather than a black box — eve
 
 - REST API (`POST /api/chat`, `GET /api/health`, `DELETE /api/chat/session`)
 - Modular NLP pipeline: preprocessing → tokenization → intent classification → entity extraction → response generation
-- 12 trainable intents + a fallback path for low-confidence/unknown input
+- 15 trainable intents + a fallback path for low-confidence/unknown input
+- TaskFlow chatflows: add, list, complete, and delete tasks, including follow-up prompts for missing task names
 - Handles paraphrased questions ("what time do you open" vs "when are you available")
 - Lightweight spell-correction for minor typos (Levenshtein distance against the training vocabulary)
 - Regex-based entity extraction (emails, phone numbers, order IDs, monetary amounts, dates, service names)
@@ -31,6 +33,7 @@ It is built to be **explainable and extensible** rather than a black box — eve
 - Responsive chat UI: message bubbles, timestamps, typing indicator, clear-chat button, auto-resizing input, Enter-to-send
 - Security: Helmet, CORS, rate limiting, input validation/sanitization, request size limits, no hardcoded secrets
 - Jest + Supertest test suite covering NLP logic and the API surface
+- Optional Gemini response polishing, strictly grounded in the local reference response and never used for task mutations
 - Clear separation of concerns so the NLP engine can be swapped for a real ML/LLM model later
 
 ---
@@ -49,7 +52,7 @@ It is built to be **explainable and extensible** rather than a black box — eve
 | Testing        | `jest`, `supertest`                          |
 | Dev tooling    | `nodemon`                                    |
 
-No external paid API is required — everything runs locally.
+The local NLP engine requires no external API. Gemini is optional and disabled unless `GEMINI_API_KEY` is configured.
 
 ---
 
@@ -64,7 +67,9 @@ flowchart LR
     E --> F[Intent Classification]
     F --> G[Entity Extraction]
     G --> H[Response Generator]
-    H --> C
+      H --> I[Task action bridge]
+      I --> J[TaskFlow in-memory task list]
+      H --> C
     C --> B
     B --> A
 ```
@@ -75,8 +80,9 @@ Request lifecycle:
 2. Express middleware (Helmet, CORS, rate limiter, JSON body parser, validator) processes the request.
 3. `chatController` resolves the session ID and calls `chatbotService.processMessage()`.
 4. `chatbotService` runs the full NLP pipeline and updates the session's context.
-5. The controller returns JSON: `reply`, `intent`, `confidence`, `entities`, `sessionId`.
-6. The frontend renders the bot's reply as a chat bubble.
+5. Recognized task actions call the host application's task callback; Gemini is skipped for mutations.
+6. The controller returns JSON: `reply`, `intent`, `confidence`, `entities`, optional `task`/`changedTask`, and `sessionId`.
+7. The frontend renders the reply. The integrated iframe notifies the parent page after a task mutation so the task list refreshes.
 
 ---
 
@@ -124,7 +130,9 @@ nlp-chatbot/
 │   │   └── chatController.js
 │   ├── services/
 │   │   ├── chatbotService.js
-│   │   └── sessionStore.js
+│   │   ├── geminiClient.js
+│   │   ├── sessionStore.js
+│   │   └── taskActions.js
 │   ├── nlp/
 │   │   ├── preprocessor.js
 │   │   ├── tokenizer.js
@@ -165,7 +173,7 @@ cd nlp-chatbot
 # 2. Install dependencies
 npm install
 
-# 3. Copy the example environment file (a working .env is already included)
+# 3. Copy the example environment file
 cp .env.example .env
 ```
 
@@ -178,10 +186,14 @@ cp .env.example .env
 | `CORS_ORIGIN`               | `*`            | Allowed origin(s) for CORS                        |
 | `RATE_LIMIT_WINDOW_MS`      | `900000`       | Rate-limit window (15 min)                        |
 | `RATE_LIMIT_MAX_REQUESTS`   | `100`          | Max requests per window per IP                    |
-| `CONFIDENCE_THRESHOLD`      | `0.35`         | Minimum confidence to accept a classified intent  |
+| `CONFIDENCE_THRESHOLD`      | `0.10`         | Minimum confidence to accept a classified intent  |
 | `SESSION_TTL_MS`            | `1800000`      | How long idle session context is kept (30 min)    |
+| `GEMINI_ENABLED`             | `true`         | Enables optional Gemini response polishing        |
+| `GEMINI_API_KEY`             | empty          | Gemini API key; keep this only in a local `.env`   |
+| `GEMINI_MODEL`               | `gemini-2.5-flash` | Gemini model name                             |
+| `GEMINI_TIMEOUT_MS`          | `8000`         | Maximum Gemini request time in milliseconds       |
 
-No secrets or API keys are required for the local NLP engine.
+No API key is required for the local NLP engine. The standalone chatbot server does not have a TaskFlow task store; task mutations are enabled when it is mounted by the root TaskFlow app.
 
 ---
 
@@ -196,6 +208,8 @@ npm run dev
 ```
 
 Then open **http://localhost:3000** in a browser.
+
+From the repository root, use `npm start` to run the integrated TaskFlow app and chatbot widget. To run only the standalone chatbot, run `npm start` from the `chatbot/` directory; its NLP/API behavior works there, but task actions require the integrated host callbacks.
 
 ---
 
@@ -225,6 +239,8 @@ Send a user message and receive a chatbot reply.
   "entities": {
     "emails": [], "phones": [], "orderIds": [], "amounts": [], "dates": [], "services": []
   },
+   "task": null,
+   "changedTask": null,
   "sessionId": "b3e1...",
   "timestamp": "2026-01-01T12:00:00.000Z"
 }
@@ -277,6 +293,18 @@ Bot:  I'm sorry for the trouble. We'll follow up at jane@example.com as soon as 
 
 User: asdkjh qweoiqwe zxcvbnm
 Bot:  I'm sorry, I didn't quite understand that. Could you rephrase it?   (intent: fallback)
+
+User: add a task to buy groceries
+Bot:  Added task: "buy groceries".   (intent: add_task)
+
+User: show my tasks
+Bot:  Your tasks: buy groceries, Read notes.   (intent: list_tasks)
+
+User: complete a task
+Bot:  Which task should I mark as complete?   (intent: complete_task)
+
+User: buy groceries
+Bot:  Completed task: "buy groceries".   (intent: complete_task)
 ```
 
 ---
@@ -287,10 +315,13 @@ Bot:  I'm sorry, I didn't quite understand that. Could you rephrase it?   (inten
 npm test
 ```
 
+From the repository root, the equivalent command is `npm run test:chatbot`.
+
 `tests/chatbot.test.js` covers:
 - Preprocessing (lowercasing, punctuation removal, stopword handling, empty input)
 - Entity extraction (email, order ID, amount)
-- Intent classification: greeting, working_hours (including a paraphrase), services, fallback on gibberish, confidence bounds
+- Intent classification: greeting, working_hours, services, add_task, list_tasks, complete_task, delete_task, fallback on gibberish, confidence bounds
+- Task flows: direct add, follow-up task title, list, complete, and delete actions
 - API: `/api/health`, valid `/api/chat` request, missing/empty/oversized/non-string message rejection, session-based context across two turns, HTML sanitization, session clearing, and 404 handling
 
 ---
@@ -324,13 +355,13 @@ P(intent | words) ∝ P(words | intent) × P(intent)
 During training, it learns how often each word appears in the example sentences for each intent (`src/data/intents.json`). At classification time, it multiplies together the probabilities of each word given each intent, and picks the intent with the highest resulting probability. It's called "naive" because it assumes each word is independent of the others, which isn't strictly true in language, but works surprisingly well for short, focused sentences like chatbot queries.
 
 **How confidence scoring works**
-The classifier returns a relative likelihood for every intent; the top one is used as the **confidence score**. If it's below `CONFIDENCE_THRESHOLD` (default 0.35), the system treats the message as unrecognized and returns a fallback response rather than guessing — an important safety behavior for real-world chatbots.
+The classifier returns a relative likelihood for every intent; the top one is used as the **confidence score**. If it's below `CONFIDENCE_THRESHOLD` (default 0.10), the system treats the message as unrecognized and returns a fallback response rather than guessing — an important safety behavior for real-world chatbots.
 
 **How entity extraction works**
 Separately from intent classification, `entityExtractor.js` scans the raw message with regular expressions to pull out structured data: email addresses, phone numbers, order IDs, monetary amounts, date keywords, and known service names. This is complementary to intent classification — the *intent* is "what do they want," while *entities* are "what specific details did they give me."
 
 **How Node.js communicates with the NLP module**
-The NLP modules are plain Node.js modules (`require`/`module.exports`) — no network calls, no external process. `chatbotService.js` calls them synchronously, in-process, which keeps latency extremely low (typically single-digit milliseconds).
+The local NLP modules are plain Node.js modules (`require`/`module.exports`) and run in-process. Optional Gemini response polishing is asynchronous and has a timeout; task mutations remain deterministic local callbacks.
 
 **How Express handles API requests**
 Express is a minimal web framework that lets you define routes (`router.post('/chat', ...)`) and chain **middleware** functions that each handle one concern (security headers, CORS, rate limiting, JSON parsing, validation) before the request reaches the controller. This "pipeline" design is why each concern lives in its own file.
@@ -394,7 +425,7 @@ Because `intentClassifier.js`, `entityExtractor.js`, and `responseGenerator.js` 
 A: For a small, well-defined set of intents with limited training examples, Naive Bayes trains instantly, requires no GPU, and is easy to explain and debug — ideal for a starter/academic project. Deep learning models need much more data to outperform it and add deployment complexity.
 
 **Q2: What does "confidence" mean in your system, and why threshold it?**
-A: It's the classifier's relative likelihood for the top-predicted intent. We threshold it (default 0.35) so the bot doesn't confidently answer a question it doesn't actually understand — instead it triggers a fallback response, which is safer and more honest than guessing.
+A: It's the classifier's relative likelihood for the top-predicted intent. We threshold it (default 0.10) so the bot doesn't confidently answer a question it doesn't actually understand — instead it triggers a fallback response, which is safer and more honest than guessing.
 
 **Q3: How does your chatbot handle two different phrasings of the same question?**
 A: Preprocessing (lowercasing, stemming, stopword removal) normalizes both phrasings toward a similar feature representation, and because the classifier was trained on multiple example phrasings per intent, it can generalize to phrasings it hasn't seen verbatim.
@@ -408,8 +439,8 @@ A: Helmet for secure HTTP headers and a Content Security Policy, CORS restrictio
 **Q6: What happens if the user sends gibberish or an empty message?**
 A: An empty (or missing, or non-string, or oversized) message is rejected with a `400` response before it ever reaches the NLP pipeline. Gibberish that passes validation but doesn't match any trained intent gets classified with low confidence, so it's routed to the fallback response.
 
-**Q7: How would you upgrade this to use a large language model?**
-A: Replace the body of `intentClassifier.js` (and/or `responseGenerator.js`) with a call to an LLM API (e.g. Anthropic's Claude), passing the user's message and asking for a structured JSON output (intent + confidence, or a generated reply). Because the rest of the app only depends on the function signatures, no other file needs to change.
+**Q7: How does the optional Gemini integration work?**
+A: `geminiClient.js` receives only a recognized intent, the sanitized user message, and the local reference answer. Gemini may polish the wording, but it cannot create or modify tasks, and the local response is used whenever Gemini is disabled, times out, or fails. The API key stays server-side in `.env`.
 
 **Q8: Why separate preprocessing, classification, extraction, and response generation into different files?**
 A: Single Responsibility Principle — each stage of the NLP pipeline is independently testable, replaceable, and understandable. It also matches how real-world NLP systems are architected as pipelines.
